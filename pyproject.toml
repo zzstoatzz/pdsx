@@ -1,40 +1,8 @@
 [project]
-name = "pdsx"
-dynamic = ["version"]
-description = "general-purpose cli for atproto record operations"
-readme = "README.md"
-authors = [{ name = "zzstoatzz", email = "thrast36@gmail.com" }]
+name = "pdsx-workspace"
+version = "0.0.0"
+description = "workspace root for pdsx packages"
 requires-python = ">=3.10"
-license = "MIT"
-
-keywords = ["atproto", "bluesky", "pds", "records", "cli", "mcp", "fastmcp"]
-
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Typing :: Typed",
-]
-
-dependencies = [
-    "atproto>=0.0.63",
-    "pydantic-settings>=2.7.0",
-    "pyyaml>=6.0.3",
-    "rich>=13.0.0",
-    "fastmcp>=2.0",
-    "jmespath>=1.0",
-]
-
-[project.scripts]
-pdsx = "pdsx.cli:main"
-pdsx-mcp = "pdsx.mcp.server:main"
 
 [dependency-groups]
 dev = [
@@ -46,20 +14,16 @@ dev = [
     "ty>=0.0.1a25",
     "mdxify>=0.2.34",
     "pytest-mock>=3.15.1",
+    "pdsx",
+    "pdsx-mcp",
 ]
 
-[build-system]
-requires = ["hatchling", "uv-dynamic-versioning>=0.7.0"]
-build-backend = "hatchling.build"
+[tool.uv.workspace]
+members = ["packages/*"]
 
-[tool.hatch.version]
-source = "uv-dynamic-versioning"
-
-[tool.uv-dynamic-versioning]
-vcs = "git"
-style = "pep440"
-bump = true
-fallback-version = "0.0.0"
+[tool.uv.sources]
+pdsx = { workspace = true }
+pdsx-mcp = { workspace = true }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -95,7 +59,7 @@ extend-select = [
 "tests/**/*.py" = ["S101"]       # Allow assert in tests
 
 [tool.coverage.run]
-source = ["src"]
+source = ["packages/pdsx/src", "packages/pdsx-mcp/src"]
 omit = ["tests/*", "sandbox/*"]
 
 [tool.coverage.report]
@@ -109,7 +73,7 @@ exclude_lines = [
 ]
 
 [tool.ty.src]
-include = ["src", "tests"]
+include = ["packages/pdsx/src", "packages/pdsx-mcp/src", "tests"]
 exclude = [
     "**/node_modules",
     "**/__pycache__",

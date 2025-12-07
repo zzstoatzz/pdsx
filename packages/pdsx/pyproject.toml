@@ -1,0 +1,50 @@
+[project]
+name = "pdsx"
+dynamic = ["version"]
+description = "general-purpose cli for atproto record operations"
+readme = "../../README.md"
+authors = [{ name = "zzstoatzz", email = "thrast36@gmail.com" }]
+requires-python = ">=3.10"
+license = "MIT"
+
+keywords = ["atproto", "bluesky", "pds", "records", "cli"]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    "atproto>=0.0.63",
+    "pydantic-settings>=2.7.0",
+    "pyyaml>=6.0.3",
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+pdsx = "pdsx.cli:main"
+
+[build-system]
+requires = ["hatchling", "uv-dynamic-versioning>=0.7.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pdsx"]
+
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
+
+[tool.uv-dynamic-versioning]
+vcs = "git"
+style = "pep440"
+bump = true
+fallback-version = "0.0.0"

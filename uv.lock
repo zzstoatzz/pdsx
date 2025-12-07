@@ -2,6 +2,13 @@ version = 1
 revision = 3
 requires-python = ">=3.10"
 
+[manifest]
+members = [
+    "pdsx",
+    "pdsx-mcp",
+    "pdsx-workspace",
+]
+
 [[package]]
 name = "annotated-types"
 version = "0.7.0"
@@ -751,19 +758,48 @@ wheels = [
 
 [[package]]
 name = "pdsx"
-source = { editable = "." }
+source = { editable = "packages/pdsx" }
 dependencies = [
     { name = "atproto" },
-    { name = "fastmcp" },
-    { name = "jmespath" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
     { name = "rich" },
 ]
 
+[package.metadata]
+requires-dist = [
+    { name = "atproto", specifier = ">=0.0.63" },
+    { name = "pydantic-settings", specifier = ">=2.7.0" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
+    { name = "rich", specifier = ">=13.0.0" },
+]
+
+[[package]]
+name = "pdsx-mcp"
+source = { editable = "packages/pdsx-mcp" }
+dependencies = [
+    { name = "fastmcp" },
+    { name = "jmespath" },
+    { name = "pdsx" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", specifier = ">=2.0" },
+    { name = "jmespath", specifier = ">=1.0" },
+    { name = "pdsx", editable = "packages/pdsx" },
+]
+
+[[package]]
+name = "pdsx-workspace"
+version = "0.0.0"
+source = { virtual = "." }
+
 [package.dev-dependencies]
 dev = [
     { name = "mdxify" },
+    { name = "pdsx" },
+    { name = "pdsx-mcp" },
     { name = "prek" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -774,18 +810,12 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "atproto", specifier = ">=0.0.63" },
-    { name = "fastmcp", specifier = ">=2.0" },
-    { name = "jmespath", specifier = ">=1.0" },
-    { name = "pydantic-settings", specifier = ">=2.7.0" },
-    { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "rich", specifier = ">=13.0.0" },
-]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "mdxify", specifier = ">=0.2.34" },
+    { name = "pdsx", editable = "packages/pdsx" },
+    { name = "pdsx-mcp", editable = "packages/pdsx-mcp" },
     { name = "prek", specifier = ">=0.2.0" },
     { name = "pytest", specifier = ">=8.3.0" },
     { name = "pytest-asyncio", specifier = ">=0.25.0" },

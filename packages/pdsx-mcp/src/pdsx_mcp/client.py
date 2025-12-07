@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 
 from atproto import AsyncClient
 
-from pdsx.mcp._types import CredentialsContext
+from pdsx_mcp._types import CredentialsContext
 
 logger = logging.getLogger(__name__)
 

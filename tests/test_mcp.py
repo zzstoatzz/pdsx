@@ -1,14 +1,14 @@
 """tests for pdsx MCP server."""
 
-from pdsx.mcp._types import (
+from pdsx_mcp._types import (
     CreateResponse,
     CredentialsContext,
     DeleteResponse,
     RecordResponse,
     UpdateResponse,
 )
-from pdsx.mcp.client import AUTH_HELP, AuthenticationRequired
-from pdsx.mcp.filterable import apply_filter, filterable
+from pdsx_mcp.client import AUTH_HELP, AuthenticationRequired
+from pdsx_mcp.filterable import apply_filter, filterable
 
 
 class TestFilterable:
@@ -144,13 +144,13 @@ class TestMcpServerImports:
 
     def test_mcp_server_imports(self):
         """mcp server can be imported without errors."""
-        from pdsx.mcp import mcp
+        from pdsx_mcp import mcp
 
         assert mcp.name == "pdsx"
 
     def test_exports(self):
         """all expected exports are available."""
-        from pdsx.mcp import (
+        from pdsx_mcp import (
             AtprotoAuthMiddleware,
             AuthenticationRequired,
             filterable,
