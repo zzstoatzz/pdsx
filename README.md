@@ -31,12 +31,90 @@ uvx pdsx edit app.bsky.actor.profile/self description='new bio'
 - **batch operations**: delete multiple records concurrently with progress tracking
 - **blob upload**: upload images, videos, and other binary content
 - **cursor pagination**: paginate through large collections
+- **MCP server**: expose operations via [model context protocol](https://modelcontextprotocol.io) for AI agents
 - optional auth: reads with `--repo` flag don't require authentication
 - shorthand URIs: use `app.bsky.feed.post/abc123` when authenticated
 - multiple output formats: compact (default), json, yaml, table
 - unix-style aliases: `ls`, `cat`, `rm`, `edit`, `touch`/`add`
 - jq-friendly json output
 - python 3.10+, type-safe
+
+## MCP server
+
+pdsx includes an MCP server for AI agent integration (e.g., claude code, cursor).
+
+### hosted instance
+
+the easiest way to use pdsx with claude code:
+
+```bash
+# read-only access (no auth needed for public data)
+claude mcp add-json pdsx '{"type": "http", "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp"}'
+
+# with authentication for write operations
+claude mcp add-json pdsx '{
+  "type": "http",
+  "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp",
+  "headers": {
+    "x-atproto-handle": "your.handle",
+    "x-atproto-password": "your-app-password"
+  }
+}'
+```
+
+get an app password at: https://bsky.app/settings/app-passwords
+
+<details>
+<summary>custom PDS configuration</summary>
+
+if you're running your own PDS, add the `x-atproto-pds-url` header:
+
+```bash
+claude mcp add-json pdsx '{
+  "type": "http",
+  "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp",
+  "headers": {
+    "x-atproto-handle": "your.handle",
+    "x-atproto-password": "your-app-password",
+    "x-atproto-pds-url": "https://your-pds.example.com"
+  }
+}'
+```
+
+for local/stdio usage with a custom PDS:
+
+```bash
+ATPROTO_HANDLE=your.handle \
+ATPROTO_PASSWORD=your-app-password \
+ATPROTO_PDS_URL=https://your-pds.example.com \
+pdsx-mcp
+```
+
+</details>
+
+### local/self-hosted
+
+run the MCP server locally:
+
+```bash
+# stdio mode (for local development)
+ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-app-password pdsx-mcp
+
+# or run with uvx
+uvx pdsx-mcp
+```
+
+### available tools
+
+| tool | auth required | description |
+|------|--------------|-------------|
+| `list_records` | only without `repo` | list records in a collection |
+| `get_record` | only without `repo` | get a specific record |
+| `create_record` | yes | create a new record |
+| `update_record` | yes | update an existing record |
+| `delete_record` | yes | delete a record |
+
+all tools support jmespath filtering via the `_filter` parameter to reduce response size.
 
 <details>
 <summary>usage examples</summary>

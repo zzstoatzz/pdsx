@@ -1,0 +1,35 @@
+---
+title: middleware
+sidebarTitle: middleware
+---
+
+# `pdsx.mcp.middleware`
+
+
+middleware for pdsx MCP server.
+
+## Classes
+
+### `AtprotoAuthMiddleware` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/middleware.py#L13" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+
+extract atproto credentials from http headers with fallback to environment.
+
+enables multi-tenant deployments where each request can carry
+its own credentials via custom http headers. if headers are not
+present (e.g., in stdio transport), falls back to environment vars.
+
+the extracted credentials are stored in the fastmcp context state and can be
+accessed using `get_atproto_client()` from the client module.
+
+
+**Methods:**
+
+#### `on_call_tool` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/middleware.py#L30" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+on_call_tool(self, context: MiddlewareContext[mt.CallToolRequestParams], call_next: CallNext[mt.CallToolRequestParams, Any]) -> Any
+```
+
+extract credentials from headers on each tool call.
+
