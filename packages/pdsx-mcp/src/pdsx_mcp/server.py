@@ -20,19 +20,19 @@ from pdsx._internal.operations import (
     update_record as _update_record,
 )
 from pdsx._internal.resolution import URIParts
-from pdsx.mcp._types import (
+from pdsx_mcp._types import (
     CreateResponse,
     DeleteResponse,
     RecordResponse,
     UpdateResponse,
 )
-from pdsx.mcp.client import (
+from pdsx_mcp.client import (
     AuthenticationRequired,
     get_atproto_client,
     get_repo_from_context,
 )
-from pdsx.mcp.filterable import filterable
-from pdsx.mcp.middleware import AtprotoAuthMiddleware
+from pdsx_mcp.filterable import filterable
+from pdsx_mcp.middleware import AtprotoAuthMiddleware
 
 mcp = FastMCP("pdsx")
 

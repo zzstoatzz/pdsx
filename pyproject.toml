@@ -7,7 +7,7 @@ authors = [{ name = "zzstoatzz", email = "thrast36@gmail.com" }]
 requires-python = ">=3.10"
 license = "MIT"
 
-keywords = ["atproto", "bluesky", "pds", "records", "cli", "mcp", "fastmcp"]
+keywords = ["atproto", "bluesky", "pds", "records", "cli"]
 
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -28,13 +28,10 @@ dependencies = [
     "pydantic-settings>=2.7.0",
     "pyyaml>=6.0.3",
     "rich>=13.0.0",
-    "fastmcp>=2.0",
-    "jmespath>=1.0",
 ]
 
 [project.scripts]
 pdsx = "pdsx.cli:main"
-pdsx-mcp = "pdsx.mcp.server:main"
 
 [dependency-groups]
 dev = [
@@ -46,6 +43,7 @@ dev = [
     "ty>=0.0.1a25",
     "mdxify>=0.2.34",
     "pytest-mock>=3.15.1",
+    "pdsx-mcp",
 ]
 
 [build-system]
@@ -125,3 +123,9 @@ python-version = "3.10"
 [tool.ty.rules]
 unknown-argument = "ignore"
 no-matching-overload = "ignore"
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+pdsx-mcp = { workspace = true }

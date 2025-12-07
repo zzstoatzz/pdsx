@@ -2,6 +2,12 @@ version = 1
 revision = 3
 requires-python = ">=3.10"
 
+[manifest]
+members = [
+    "pdsx",
+    "pdsx-mcp",
+]
+
 [[package]]
 name = "annotated-types"
 version = "0.7.0"
@@ -754,8 +760,6 @@ name = "pdsx"
 source = { editable = "." }
 dependencies = [
     { name = "atproto" },
-    { name = "fastmcp" },
-    { name = "jmespath" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
     { name = "rich" },
@@ -764,6 +768,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "mdxify" },
+    { name = "pdsx-mcp" },
     { name = "prek" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -776,8 +781,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "atproto", specifier = ">=0.0.63" },
-    { name = "fastmcp", specifier = ">=2.0" },
-    { name = "jmespath", specifier = ">=1.0" },
     { name = "pydantic-settings", specifier = ">=2.7.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rich", specifier = ">=13.0.0" },
@@ -786,6 +789,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "mdxify", specifier = ">=0.2.34" },
+    { name = "pdsx-mcp", editable = "packages/pdsx-mcp" },
     { name = "prek", specifier = ">=0.2.0" },
     { name = "pytest", specifier = ">=8.3.0" },
     { name = "pytest-asyncio", specifier = ">=0.25.0" },
@@ -793,6 +797,22 @@ dev = [
     { name = "pytest-sugar" },
     { name = "ruff", specifier = ">=0.12.0" },
     { name = "ty", specifier = ">=0.0.1a25" },
+]
+
+[[package]]
+name = "pdsx-mcp"
+source = { editable = "packages/pdsx-mcp" }
+dependencies = [
+    { name = "fastmcp" },
+    { name = "jmespath" },
+    { name = "pdsx" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", specifier = ">=2.0" },
+    { name = "jmespath", specifier = ">=1.0" },
+    { name = "pdsx", editable = "." },
 ]
 
 [[package]]
