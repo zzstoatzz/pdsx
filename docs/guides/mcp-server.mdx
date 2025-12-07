@@ -1,0 +1,251 @@
+---
+title: "MCP Server"
+description: "integrate pdsx with AI agents via the model context protocol"
+---
+
+pdsx includes an MCP (model context protocol) server that exposes atproto record operations to AI agents like Claude Code, Cursor, and other MCP-compatible clients.
+
+## hosted instance
+
+the easiest way to get started - no installation required:
+
+```bash
+# add to claude code (read-only access)
+claude mcp add-json pdsx '{"type": "http", "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp"}'
+```
+
+this gives your AI agent access to read public atproto data immediately.
+
+### adding authentication
+
+for write operations (create, update, delete), add your credentials:
+
+```bash
+claude mcp add-json pdsx '{
+  "type": "http",
+  "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp",
+  "headers": {
+    "x-atproto-handle": "your.handle",
+    "x-atproto-password": "your-app-password"
+  }
+}'
+```
+
+<Warning>
+use an [app password](https://bsky.app/settings/app-passwords), not your account password. app passwords can be revoked individually if compromised.
+</Warning>
+
+### custom PDS
+
+if you're running your own PDS (personal data server), add the PDS URL header:
+
+```bash
+claude mcp add-json pdsx '{
+  "type": "http",
+  "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp",
+  "headers": {
+    "x-atproto-handle": "your.handle",
+    "x-atproto-password": "your-app-password",
+    "x-atproto-pds-url": "https://your-pds.example.com"
+  }
+}'
+```
+
+<Note>
+when reading public data from other users, pdsx automatically discovers their PDS - you don't need to configure anything. the `x-atproto-pds-url` header is only needed for write operations to your own account on a custom PDS.
+</Note>
+
+## local/self-hosted
+
+run the MCP server locally for development or self-hosting:
+
+```bash
+# install with mcp extra
+uv add pdsx[mcp]
+
+# run in stdio mode
+ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-app-password pdsx-mcp
+```
+
+or use uvx without installing:
+
+```bash
+uvx --from 'pdsx[mcp]' pdsx-mcp
+```
+
+### configure claude code for local server
+
+```bash
+claude mcp add pdsx -- pdsx-mcp
+```
+
+with authentication via environment:
+
+```bash
+claude mcp add pdsx --env ATPROTO_HANDLE=your.handle --env ATPROTO_PASSWORD=your-app-password -- pdsx-mcp
+```
+
+## available tools
+
+the MCP server exposes five tools for record operations:
+
+| tool | auth required | description |
+|------|--------------|-------------|
+| `list_records` | only without `repo` | list records in a collection |
+| `get_record` | only without `repo` | get a specific record by URI |
+| `create_record` | always | create a new record |
+| `update_record` | always | update an existing record |
+| `delete_record` | always | delete a record |
+
+### read operations
+
+read operations work without authentication when you specify a `repo`:
+
+```
+list_records(collection="app.bsky.feed.post", repo="zzstoatzz.io", limit=10)
+get_record(uri="at://did:plc:.../app.bsky.feed.post/abc123")
+```
+
+without a `repo` parameter, the server reads from your authenticated account.
+
+### write operations
+
+write operations always require authentication:
+
+```
+create_record(collection="app.bsky.feed.post", record={"text": "hello from pdsx!"})
+update_record(uri="app.bsky.feed.post/abc123", updates={"text": "updated text"})
+delete_record(uri="app.bsky.feed.post/abc123")
+```
+
+## PDS discovery
+
+pdsx automatically discovers the correct PDS for any user. when you query records from `repo="zzstoatzz.io"`, it:
+
+1. resolves the handle to a DID
+2. looks up the DID document
+3. extracts the PDS endpoint
+4. queries that PDS directly
+
+this means you can read records from users on any PDS - including self-hosted instances - without any configuration.
+
+## filtering responses
+
+all read operations support a `_filter` parameter for jmespath expressions:
+
+```
+# extract just post text
+list_records(
+  collection="app.bsky.feed.post",
+  repo="zzstoatzz.io",
+  _filter="[*].value.text"
+)
+
+# select specific fields
+list_records(
+  collection="app.bsky.feed.post",
+  repo="zzstoatzz.io",
+  _filter="[*].{uri: uri, text: value.text}"
+)
+
+# filter items
+list_records(
+  collection="app.bsky.feed.post",
+  repo="zzstoatzz.io",
+  _filter="[?value.text != null]"
+)
+```
+
+see [jmespath.org](https://jmespath.org) for full syntax.
+
+## common collections
+
+here are the most commonly used collections:
+
+| collection | description | rkey format |
+|------------|-------------|-------------|
+| `app.bsky.feed.post` | posts/skeets | tid (e.g., `3m4ryxwq5dt2i`) |
+| `app.bsky.actor.profile` | user profile | always `self` |
+| `app.bsky.feed.like` | likes | tid |
+| `app.bsky.feed.repost` | reposts | tid |
+| `app.bsky.graph.follow` | follows | tid |
+| `app.bsky.graph.list` | lists | tid |
+
+## prompts
+
+the MCP server includes built-in prompts for guidance:
+
+- `usage_guide` - general usage instructions
+- `create_post_guide` - how to create posts with rich text
+
+## resources
+
+the server exposes one resource:
+
+- `pdsx://me` - shows your authenticated identity (handle and DID)
+
+## example workflows
+
+### reading someone's recent posts
+
+```
+list_records(
+  collection="app.bsky.feed.post",
+  repo="jay.bsky.team",
+  limit=5
+)
+```
+
+### getting a user's bio
+
+```
+get_record(
+  uri="app.bsky.actor.profile/self",
+  repo="zzstoatzz.io"
+)
+```
+
+### creating a post
+
+```
+create_record(
+  collection="app.bsky.feed.post",
+  record={"text": "posted via pdsx MCP!"}
+)
+```
+
+### updating your bio
+
+```
+update_record(
+  uri="app.bsky.actor.profile/self",
+  updates={"description": "new bio text"}
+)
+```
+
+## troubleshooting
+
+### "authentication required"
+
+you're trying to perform an operation that needs credentials:
+- write operations (create, update, delete) always need auth
+- read operations without `repo` parameter need auth
+
+add credentials via headers (hosted) or environment variables (local).
+
+### empty results for custom PDS users
+
+if you're getting empty results when querying a user on a self-hosted PDS, ensure you're using a recent version of pdsx. older versions didn't automatically discover custom PDS endpoints.
+
+### "could not find repo"
+
+the handle or DID couldn't be resolved. check:
+- the handle is spelled correctly
+- the account exists and isn't deleted
+- your network can reach the PDS
+
+## what's next
+
+- [configure for writes](/guides/configure-for-writes) - set up authentication
+- [read any repository](/guides/read-repositories) - explore public data with the CLI
+- [addressing](/concepts/addressing) - understand AT-URIs and record addressing

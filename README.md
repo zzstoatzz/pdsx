@@ -45,15 +45,11 @@ uvx pdsx edit app.bsky.actor.profile/self description='new bio'
 
 pdsx includes an MCP server for AI agent integration (e.g., claude code, cursor).
 
-### hosted instance
-
-the easiest way to use pdsx with claude code:
-
 ```bash
-# read-only access (no auth needed for public data)
+# add to claude code (read-only)
 claude mcp add-json pdsx '{"type": "http", "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp"}'
 
-# with authentication for write operations
+# with authentication for writes
 claude mcp add-json pdsx '{
   "type": "http",
   "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp",
@@ -66,66 +62,7 @@ claude mcp add-json pdsx '{
 
 get an app password at: https://bsky.app/settings/app-passwords
 
-<details>
-<summary>custom PDS configuration</summary>
-
-if you're running your own PDS, add the `x-atproto-pds-url` header:
-
-```bash
-claude mcp add-json pdsx '{
-  "type": "http",
-  "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp",
-  "headers": {
-    "x-atproto-handle": "your.handle",
-    "x-atproto-password": "your-app-password",
-    "x-atproto-pds-url": "https://your-pds.example.com"
-  }
-}'
-```
-
-for local/stdio usage with a custom PDS:
-
-```bash
-ATPROTO_HANDLE=your.handle \
-ATPROTO_PASSWORD=your-app-password \
-ATPROTO_PDS_URL=https://your-pds.example.com \
-pdsx-mcp
-```
-
-</details>
-
-<details>
-<summary>local/self-hosted</summary>
-
-run the MCP server locally (requires `pdsx[mcp]` extra):
-
-```bash
-# install with mcp extra
-uv add pdsx[mcp]
-
-# stdio mode (for local development)
-ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-app-password pdsx-mcp
-
-# or run with uvx (no install needed)
-uvx --from 'pdsx[mcp]' pdsx-mcp
-```
-
-</details>
-
-<details>
-<summary>available tools</summary>
-
-| tool | auth required | description |
-|------|--------------|-------------|
-| `list_records` | only without `repo` | list records in a collection |
-| `get_record` | only without `repo` | get a specific record |
-| `create_record` | yes | create a new record |
-| `update_record` | yes | update an existing record |
-| `delete_record` | yes | delete a record |
-
-all tools support jmespath filtering via the `_filter` parameter to reduce response size.
-
-</details>
+📚 **[full MCP documentation](https://pdsx.zzstoatzz.io/guides/mcp-server)** - local setup, custom PDS, available tools, filtering, and more
 
 <details>
 <summary>usage examples</summary>

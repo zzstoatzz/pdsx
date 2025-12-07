@@ -33,6 +33,7 @@
             "pages": [
               "guides/configure-for-writes",
               "guides/read-repositories",
+              "guides/mcp-server",
               "guides/batch-operations",
               "guides/crud-safety",
               "guides/blob-upload"
