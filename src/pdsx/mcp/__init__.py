@@ -18,7 +18,7 @@ def main() -> None:
             "  # or\n"
             "  pip install pdsx[mcp]\n\n"
             "run with uvx:\n"
-            "  uvx --with 'pdsx[mcp]' pdsx-mcp"
+            "  uvx --from 'pdsx[mcp]' pdsx-mcp"
         )
         sys.exit(1)
 

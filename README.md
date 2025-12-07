@@ -107,7 +107,7 @@ uv add pdsx[mcp]
 ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-app-password pdsx-mcp
 
 # or run with uvx (no install needed)
-uvx --with 'pdsx[mcp]' pdsx-mcp
+uvx --from 'pdsx[mcp]' pdsx-mcp
 ```
 
 </details>
