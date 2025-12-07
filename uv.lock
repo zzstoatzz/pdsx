@@ -6,6 +6,7 @@ requires-python = ">=3.10"
 members = [
     "pdsx",
     "pdsx-mcp",
+    "pdsx-workspace",
 ]
 
 [[package]]
@@ -757,25 +758,12 @@ wheels = [
 
 [[package]]
 name = "pdsx"
-source = { editable = "." }
+source = { editable = "packages/pdsx" }
 dependencies = [
     { name = "atproto" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
     { name = "rich" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "mdxify" },
-    { name = "pdsx-mcp" },
-    { name = "prek" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-mock" },
-    { name = "pytest-sugar" },
-    { name = "ruff" },
-    { name = "ty" },
 ]
 
 [package.metadata]
@@ -784,19 +772,6 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.7.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rich", specifier = ">=13.0.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mdxify", specifier = ">=0.2.34" },
-    { name = "pdsx-mcp", editable = "packages/pdsx-mcp" },
-    { name = "prek", specifier = ">=0.2.0" },
-    { name = "pytest", specifier = ">=8.3.0" },
-    { name = "pytest-asyncio", specifier = ">=0.25.0" },
-    { name = "pytest-mock", specifier = ">=3.15.1" },
-    { name = "pytest-sugar" },
-    { name = "ruff", specifier = ">=0.12.0" },
-    { name = "ty", specifier = ">=0.0.1a25" },
 ]
 
 [[package]]
@@ -812,7 +787,42 @@ dependencies = [
 requires-dist = [
     { name = "fastmcp", specifier = ">=2.0" },
     { name = "jmespath", specifier = ">=1.0" },
-    { name = "pdsx", editable = "." },
+    { name = "pdsx", editable = "packages/pdsx" },
+]
+
+[[package]]
+name = "pdsx-workspace"
+version = "0.0.0"
+source = { virtual = "." }
+
+[package.dev-dependencies]
+dev = [
+    { name = "mdxify" },
+    { name = "pdsx" },
+    { name = "pdsx-mcp" },
+    { name = "prek" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-mock" },
+    { name = "pytest-sugar" },
+    { name = "ruff" },
+    { name = "ty" },
+]
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mdxify", specifier = ">=0.2.34" },
+    { name = "pdsx", editable = "packages/pdsx" },
+    { name = "pdsx-mcp", editable = "packages/pdsx-mcp" },
+    { name = "prek", specifier = ">=0.2.0" },
+    { name = "pytest", specifier = ">=8.3.0" },
+    { name = "pytest-asyncio", specifier = ">=0.25.0" },
+    { name = "pytest-mock", specifier = ">=3.15.1" },
+    { name = "pytest-sugar" },
+    { name = "ruff", specifier = ">=0.12.0" },
+    { name = "ty", specifier = ">=0.0.1a25" },
 ]
 
 [[package]]

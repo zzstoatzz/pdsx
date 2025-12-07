@@ -19,8 +19,8 @@ jobs:
       - name: "Install uv"
         uses: astral-sh/setup-uv@v7
 
-      - name: Build
-        run: uv build
+      - name: Build pdsx
+        run: uv build --package pdsx
 
-      - name: Publish to PyPI
+      - name: Publish pdsx to PyPI
         run: uv publish -v dist/*
