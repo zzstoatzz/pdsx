@@ -64,6 +64,34 @@ claude mcp add-json pdsx '{
 
 get an app password at: https://bsky.app/settings/app-passwords
 
+<details>
+<summary>custom PDS configuration</summary>
+
+if you're running your own PDS, add the `x-atproto-pds-url` header:
+
+```bash
+claude mcp add-json pdsx '{
+  "type": "http",
+  "url": "https://pdsx.fastmcp.app/mcp",
+  "headers": {
+    "x-atproto-handle": "your.handle",
+    "x-atproto-password": "your-app-password",
+    "x-atproto-pds-url": "https://your-pds.example.com"
+  }
+}'
+```
+
+for local/stdio usage with a custom PDS:
+
+```bash
+ATPROTO_HANDLE=your.handle \
+ATPROTO_PASSWORD=your-app-password \
+ATPROTO_PDS_URL=https://your-pds.example.com \
+pdsx-mcp
+```
+
+</details>
+
 ### local/self-hosted
 
 run the MCP server locally:
