@@ -39,6 +39,69 @@ mcp = FastMCP("pdsx")
 mcp.add_middleware(AtprotoAuthMiddleware())
 
 
+def _clean_value(value: Any) -> dict[str, Any]:
+    """clean up a record value for semantic density.
+
+    removes:
+    - null fields (embed: null, labels: null, etc.)
+    - redundant $type fields
+    - byte indices from facets (keeps just links/mentions)
+    - verbose reply structure (keeps just uris)
+    """
+    if not isinstance(value, dict):
+        return {"raw": value}
+
+    result: dict[str, Any] = {}
+
+    for k, v in value.items():
+        # skip null values
+        if v is None:
+            continue
+
+        # skip $type - we already know the collection
+        if k == "$type":
+            continue
+
+        # simplify facets: extract just the links/mentions
+        if k == "facets" and isinstance(v, list):
+            links = []
+            mentions = []
+            for facet in v:
+                for feature in facet.get("features", []):
+                    ftype = feature.get("$type", "")
+                    if "link" in ftype and "uri" in feature:
+                        links.append(feature["uri"])
+                    elif "mention" in ftype and "did" in feature:
+                        mentions.append(feature["did"])
+            if links:
+                result["links"] = links
+            if mentions:
+                result["mentions"] = mentions
+            continue
+
+        # simplify reply: just keep parent and root URIs
+        if k == "reply" and isinstance(v, dict):
+            reply_info: dict[str, str] = {}
+            if "parent" in v and isinstance(v["parent"], dict):
+                reply_info["parent"] = v["parent"].get("uri", "")
+            if "root" in v and isinstance(v["root"], dict):
+                reply_info["root"] = v["root"].get("uri", "")
+            if reply_info:
+                result["reply"] = reply_info
+            continue
+
+        # skip langs unless it's interesting (multiple or non-english)
+        if k == "langs":
+            if isinstance(v, list) and (len(v) > 1 or (v and v[0] != "en")):
+                result[k] = v
+            continue
+
+        # keep everything else
+        result[k] = v
+
+    return result
+
+
 # -----------------------------------------------------------------------------
 # prompts
 # -----------------------------------------------------------------------------
@@ -180,7 +243,7 @@ async def list_records(
             client, collection, limit, repo=repo_override, cursor=cursor
         )
         return [
-            RecordResponse(uri=r.uri, cid=r.cid, value=r.value)
+            RecordResponse(uri=r.uri, cid=r.cid, value=_clean_value(r.value))
             for r in response.records
         ]
 
@@ -216,7 +279,9 @@ async def get_record(
         operation="getting your own record",
     ) as client:
         response = await _get_record(client, uri, repo=repo_override)
-        return RecordResponse(uri=response.uri, cid=response.cid, value=response.value)
+        return RecordResponse(
+            uri=response.uri, cid=response.cid, value=_clean_value(response.value)
+        )
 
 
 @mcp.tool
