@@ -53,7 +53,7 @@ to authenticate, set headers when configuring the MCP server:
 example claude code configuration:
   claude mcp add-json pdsx '{
     "type": "http",
-    "url": "https://pdsx.fastmcp.app/mcp",
+    "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp",
     "headers": {
       "x-atproto-handle": "your.handle",
       "x-atproto-password": "your-app-password"
