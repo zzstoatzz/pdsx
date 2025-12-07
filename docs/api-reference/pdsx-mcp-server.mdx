@@ -1,0 +1,161 @@
+---
+title: server
+sidebarTitle: server
+---
+
+# `pdsx.mcp.server`
+
+
+pdsx MCP server implementation using fastmcp.
+
+## Functions
+
+### `usage_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L48" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+usage_guide() -> str
+```
+
+
+instructions for using pdsx MCP tools.
+
+
+### `create_post_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L94" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+create_post_guide() -> str
+```
+
+
+instructions for creating posts.
+
+
+### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L150" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+list_records(collection: str, limit: int = 50, repo: str | None = None, cursor: str | None = None) -> list[RecordResponse]
+```
+
+
+list records in a collection.
+
+examples:
+- list_records("app.bsky.feed.post", repo="zzstoatzz.io") - list someone's posts
+- list_records("app.bsky.actor.profile", repo="did:plc:...") - list by DID
+- list_records("app.bsky.feed.post") - list your own posts (requires auth)
+
+**Args:**
+- `collection`: the collection to list (e.g., 'app.bsky.feed.post')
+- `limit`: max records to return (default 50)
+- `repo`: handle or DID to read from. if not provided, reads your own records (requires auth)
+- `cursor`: pagination cursor from previous response
+
+**Returns:**
+- list of records with uri, cid, and value fields
+
+
+### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L190" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+get_record(uri: str, repo: str | None = None) -> RecordResponse
+```
+
+
+get a specific record by uri.
+
+examples:
+- get_record("at://did:plc:.../app.bsky.feed.post/abc123")
+- get_record("app.bsky.feed.post/abc123") - shorthand (requires auth)
+- get_record("app.bsky.actor.profile/self", repo="zzstoatzz.io") - someone's profile
+
+**Args:**
+- `uri`: full AT-URI or shorthand (collection/rkey)
+- `repo`: when using shorthand uri, the repo to read from
+
+**Returns:**
+- record with uri, cid, and value fields
+
+
+### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L223" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+create_record(collection: str, record: dict[str, Any]) -> CreateResponse
+```
+
+
+create a new record. requires authentication.
+
+examples:
+- create_record("app.bsky.feed.post", {"text": "hello world!"})
+- create_record("app.bsky.feed.like", {"subject": {"uri": "...", "cid": "..."}})
+
+**Args:**
+- `collection`: the collection to create in (e.g., 'app.bsky.feed.post')
+- `record`: the record data. $type and createdAt are auto-added if missing.
+
+**Returns:**
+- dict with uri and cid of created record
+
+
+### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L249" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+update_record(uri: str, updates: dict[str, Any]) -> UpdateResponse
+```
+
+
+update an existing record. requires authentication.
+
+fetches the current record, merges your updates, and puts it back.
+
+examples:
+- update_record("app.bsky.actor.profile/self", {"description": "new bio!"})
+- update_record("at://did:plc:.../app.bsky.feed.post/abc", {"text": "edited"})
+
+**Args:**
+- `uri`: full AT-URI or shorthand (collection/rkey)
+- `updates`: fields to update (merged with existing record)
+
+**Returns:**
+- dict with uri and cid of updated record
+
+
+### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L277" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+delete_record(uri: str) -> DeleteResponse
+```
+
+
+delete a record. requires authentication.
+
+examples:
+- delete_record("app.bsky.feed.post/abc123")
+- delete_record("at://did:plc:.../app.bsky.feed.post/abc123")
+
+**Args:**
+- `uri`: full AT-URI or shorthand (collection/rkey)
+
+**Returns:**
+- confirmation with deleted uri
+
+
+### `me_resource` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L308" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+me_resource() -> str
+```
+
+
+current authenticated user identity.
+
+
+### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L324" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+main() -> None
+```
+
+
+run the MCP server.
+

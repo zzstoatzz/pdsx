@@ -1,0 +1,330 @@
+"""pdsx MCP server implementation using fastmcp."""
+
+from typing import Any
+
+from fastmcp import FastMCP
+
+from pdsx._internal.operations import (
+    create_record as _create_record,
+)
+from pdsx._internal.operations import (
+    delete_record as _delete_record,
+)
+from pdsx._internal.operations import (
+    get_record as _get_record,
+)
+from pdsx._internal.operations import (
+    list_records as _list_records,
+)
+from pdsx._internal.operations import (
+    update_record as _update_record,
+)
+from pdsx._internal.resolution import URIParts
+from pdsx.mcp._types import (
+    CreateResponse,
+    DeleteResponse,
+    RecordResponse,
+    UpdateResponse,
+)
+from pdsx.mcp.client import (
+    AuthenticationRequired,
+    get_atproto_client,
+    get_repo_from_context,
+)
+from pdsx.mcp.filterable import filterable
+from pdsx.mcp.middleware import AtprotoAuthMiddleware
+
+mcp = FastMCP("pdsx")
+
+mcp.add_middleware(AtprotoAuthMiddleware())
+
+
+# -----------------------------------------------------------------------------
+# prompts
+# -----------------------------------------------------------------------------
+
+
+@mcp.prompt("usage_guide")  # type: ignore[call-non-callable]
+def usage_guide() -> str:
+    """instructions for using pdsx MCP tools."""
+    return """\
+# pdsx MCP server usage guide
+
+pdsx provides tools for atproto record operations (bluesky, etc).
+
+## authentication
+
+some operations require authentication:
+- **read operations** with `repo` parameter: no auth needed
+- **read operations** without `repo`: auth needed (reads your own records)
+- **write operations** (create, update, delete): always require auth
+
+to authenticate, set these headers when configuring the MCP server:
+- `x-atproto-handle`: your atproto handle (e.g., 'you.bsky.social')
+- `x-atproto-password`: your atproto app password (NOT your main password!)
+
+get an app password at: https://bsky.app/settings/app-passwords
+
+## common collections
+
+- `app.bsky.feed.post` - posts/skeets
+- `app.bsky.actor.profile` - user profile (rkey is always 'self')
+- `app.bsky.feed.like` - likes
+- `app.bsky.feed.repost` - reposts
+- `app.bsky.graph.follow` - follows
+
+## uri formats
+
+records are identified by AT-URIs:
+- full: `at://did:plc:abc123/app.bsky.feed.post/xyz789`
+- shorthand (when authenticated): `app.bsky.feed.post/xyz789`
+
+## filtering results
+
+list_records and get_record support a `_filter` parameter with jmespath:
+- `[*].uri` - extract just URIs
+- `[*].{uri: uri, text: value.text}` - select specific fields
+- `[?value.text != null]` - filter items
+
+see https://jmespath.org for full syntax.
+"""
+
+
+@mcp.prompt("create_post_guide")  # type: ignore[call-non-callable]
+def create_post_guide() -> str:
+    """instructions for creating posts."""
+    return """\
+# creating posts with pdsx
+
+## simple text post
+
+```
+create_record(
+    collection="app.bsky.feed.post",
+    record={"text": "hello from pdsx!"}
+)
+```
+
+## post with link
+
+```
+create_record(
+    collection="app.bsky.feed.post",
+    record={
+        "text": "check out pdsx.zzstoatzz.io",
+        "facets": [{
+            "index": {"byteStart": 10, "byteEnd": 28},
+            "features": [{"$type": "app.bsky.richtext.facet#link", "uri": "https://pdsx.zzstoatzz.io"}]
+        }]
+    }
+)
+```
+
+## post with mention
+
+```
+create_record(
+    collection="app.bsky.feed.post",
+    record={
+        "text": "@someone.bsky.social hello!",
+        "facets": [{
+            "index": {"byteStart": 0, "byteEnd": 20},
+            "features": [{"$type": "app.bsky.richtext.facet#mention", "did": "did:plc:..."}]
+        }]
+    }
+)
+```
+
+note: for mentions, you need to resolve the handle to a DID first.
+the createdAt field is auto-added if not provided.
+"""
+
+
+# -----------------------------------------------------------------------------
+# tools
+# -----------------------------------------------------------------------------
+
+
+@mcp.tool
+@filterable
+async def list_records(
+    collection: str,
+    limit: int = 50,
+    repo: str | None = None,
+    cursor: str | None = None,
+) -> list[RecordResponse]:
+    """list records in a collection.
+
+    examples:
+    - list_records("app.bsky.feed.post", repo="zzstoatzz.io") - list someone's posts
+    - list_records("app.bsky.actor.profile", repo="did:plc:...") - list by DID
+    - list_records("app.bsky.feed.post") - list your own posts (requires auth)
+
+    args:
+        collection: the collection to list (e.g., 'app.bsky.feed.post')
+        limit: max records to return (default 50)
+        repo: handle or DID to read from. if not provided, reads your own records (requires auth)
+        cursor: pagination cursor from previous response
+
+    returns:
+        list of records with uri, cid, and value fields
+    """
+    repo_override = repo or get_repo_from_context()
+    require_auth = repo_override is None
+
+    async with get_atproto_client(
+        require_auth=require_auth,
+        operation="listing your own records",
+    ) as client:
+        response = await _list_records(
+            client, collection, limit, repo=repo_override, cursor=cursor
+        )
+        return [
+            RecordResponse(uri=r.uri, cid=r.cid, value=r.value)
+            for r in response.records
+        ]
+
+
+@mcp.tool
+@filterable
+async def get_record(
+    uri: str,
+    repo: str | None = None,
+) -> RecordResponse:
+    """get a specific record by uri.
+
+    examples:
+    - get_record("at://did:plc:.../app.bsky.feed.post/abc123")
+    - get_record("app.bsky.feed.post/abc123") - shorthand (requires auth)
+    - get_record("app.bsky.actor.profile/self", repo="zzstoatzz.io") - someone's profile
+
+    args:
+        uri: full AT-URI or shorthand (collection/rkey)
+        repo: when using shorthand uri, the repo to read from
+
+    returns:
+        record with uri, cid, and value fields
+    """
+    repo_override = repo or get_repo_from_context()
+
+    # determine if auth is required
+    is_full_uri = uri.startswith("at://")
+    require_auth = not is_full_uri and repo_override is None
+
+    async with get_atproto_client(
+        require_auth=require_auth,
+        operation="getting your own record",
+    ) as client:
+        response = await _get_record(client, uri, repo=repo_override)
+        return RecordResponse(uri=response.uri, cid=response.cid, value=response.value)
+
+
+@mcp.tool
+async def create_record(
+    collection: str,
+    record: dict[str, Any],
+) -> CreateResponse:
+    """create a new record. requires authentication.
+
+    examples:
+    - create_record("app.bsky.feed.post", {"text": "hello world!"})
+    - create_record("app.bsky.feed.like", {"subject": {"uri": "...", "cid": "..."}})
+
+    args:
+        collection: the collection to create in (e.g., 'app.bsky.feed.post')
+        record: the record data. $type and createdAt are auto-added if missing.
+
+    returns:
+        dict with uri and cid of created record
+    """
+    async with get_atproto_client(
+        require_auth=True,
+        operation="creating a record",
+    ) as client:
+        response = await _create_record(client, collection, record)
+        return CreateResponse(uri=response.uri, cid=response.cid)
+
+
+@mcp.tool
+async def update_record(
+    uri: str,
+    updates: dict[str, Any],
+) -> UpdateResponse:
+    """update an existing record. requires authentication.
+
+    fetches the current record, merges your updates, and puts it back.
+
+    examples:
+    - update_record("app.bsky.actor.profile/self", {"description": "new bio!"})
+    - update_record("at://did:plc:.../app.bsky.feed.post/abc", {"text": "edited"})
+
+    args:
+        uri: full AT-URI or shorthand (collection/rkey)
+        updates: fields to update (merged with existing record)
+
+    returns:
+        dict with uri and cid of updated record
+    """
+    async with get_atproto_client(
+        require_auth=True,
+        operation="updating a record",
+    ) as client:
+        response = await _update_record(client, uri, updates)
+        return UpdateResponse(uri=response.uri, cid=response.cid)
+
+
+@mcp.tool
+async def delete_record(uri: str) -> DeleteResponse:
+    """delete a record. requires authentication.
+
+    examples:
+    - delete_record("app.bsky.feed.post/abc123")
+    - delete_record("at://did:plc:.../app.bsky.feed.post/abc123")
+
+    args:
+        uri: full AT-URI or shorthand (collection/rkey)
+
+    returns:
+        confirmation with deleted uri
+    """
+    async with get_atproto_client(
+        require_auth=True,
+        operation="deleting a record",
+    ) as client:
+        # parse uri to get parts for confirmation
+        parts = URIParts.from_uri(uri, client.me.did if client.me else None)
+        await _delete_record(client, uri)
+        return DeleteResponse(
+            deleted=f"at://{parts.repo}/{parts.collection}/{parts.rkey}"
+        )
+
+
+# -----------------------------------------------------------------------------
+# resources
+# -----------------------------------------------------------------------------
+
+
+@mcp.resource("pdsx://me")
+async def me_resource() -> str:
+    """current authenticated user identity."""
+    try:
+        async with get_atproto_client(require_auth=True) as client:
+            if client.me:
+                return f"authenticated as {client.me.handle} ({client.me.did})"
+            return "authenticated but no user info available"
+    except AuthenticationRequired:
+        return "not authenticated - set x-atproto-handle and x-atproto-password headers"
+
+
+# -----------------------------------------------------------------------------
+# entrypoint
+# -----------------------------------------------------------------------------
+
+
+def main() -> None:
+    """run the MCP server."""
+    mcp.run()
+
+
+if __name__ == "__main__":
+    main()

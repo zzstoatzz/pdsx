@@ -1,0 +1,76 @@
+---
+title: client
+sidebarTitle: client
+---
+
+# `pdsx.mcp.client`
+
+
+helper for creating atproto clients with per-request credentials.
+
+## Functions
+
+### `_get_credentials_from_context` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L15" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_get_credentials_from_context() -> CredentialsContext
+```
+
+
+extract credentials from fastmcp context if available.
+
+**Returns:**
+- credentials dict with handle, password, pds_url, repo (any may be None)
+
+
+### `get_atproto_client` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L78" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+get_atproto_client(require_auth: bool = False, operation: str = 'this operation') -> AsyncIterator[AsyncClient]
+```
+
+
+get an atproto client using credentials from context or environment.
+
+first checks if credentials were provided via http headers (stored in fastmcp
+context state by AtprotoAuthMiddleware). if found, creates an authenticated
+client. otherwise falls back to ATPROTO_HANDLE/ATPROTO_PASSWORD environment
+variables.
+
+this enables both:
+- multi-tenant http deployments (credentials per request via headers)
+- traditional stdio deployments (credentials from environment)
+
+**Args:**
+- `require_auth`: if True, raises AuthenticationRequired when no credentials
+- `operation`: description of the operation for error messages
+
+**Raises:**
+- `AuthenticationRequired`: if require_auth=True and no credentials available
+
+
+### `get_repo_from_context` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L132" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+get_repo_from_context() -> str | None
+```
+
+
+get repo override from context if set via x-atproto-repo header.
+
+
+## Classes
+
+### `AuthenticationRequired` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L70" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+
+raised when an operation requires authentication but none was provided.
+
+
+**Methods:**
+
+#### `__init__` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L73" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+__init__(self, operation: str = 'this operation')
+```
