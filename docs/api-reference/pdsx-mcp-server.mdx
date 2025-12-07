@@ -26,7 +26,7 @@ removes:
 - verbose reply structure (keeps just uris)
 
 
-### `usage_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L111" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `usage_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L115" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 usage_guide() -> str
@@ -36,7 +36,7 @@ usage_guide() -> str
 instructions for using pdsx MCP tools.
 
 
-### `create_post_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L157" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `create_post_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L161" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 create_post_guide() -> str
@@ -46,7 +46,7 @@ create_post_guide() -> str
 instructions for creating posts.
 
 
-### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L213" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L217" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 list_records(collection: str, limit: int = 50, repo: str | None = None, cursor: str | None = None) -> list[RecordResponse]
@@ -70,7 +70,7 @@ examples:
 - list of records with uri, cid, and value fields
 
 
-### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L254" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L258" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 get_record(uri: str, repo: str | None = None) -> RecordResponse
@@ -92,7 +92,7 @@ examples:
 - record with uri, cid, and value fields
 
 
-### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L297" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L301" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 create_record(collection: str, record: dict[str, Any]) -> CreateResponse
@@ -109,7 +109,7 @@ create a new record. requires authentication.
 - dict with uri and cid of created record
 
 
-### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L319" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L323" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 update_record(uri: str, updates: dict[str, Any]) -> UpdateResponse
@@ -128,7 +128,7 @@ fetches the current record, merges your updates, and puts it back.
 - dict with uri and cid of updated record
 
 
-### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L343" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L347" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 delete_record(uri: str) -> DeleteResponse
@@ -148,7 +148,7 @@ examples:
 - confirmation with deleted uri
 
 
-### `me_resource` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L374" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `me_resource` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L378" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 me_resource() -> str
@@ -158,7 +158,7 @@ me_resource() -> str
 current authenticated user identity.
 
 
-### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L390" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L394" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 main() -> None
