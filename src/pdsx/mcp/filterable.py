@@ -1,17 +1,10 @@
 """filterable decorator for MCP tools.
 
-adds a `_filter` parameter that accepts jmespath expressions to
-filter/project tool results. reduces response size and lets
+Adds a `_filter` parameter that accepts jmespath expressions to
+filter/project tool results. Reduces response size and lets
 LLM clients request only the fields they need.
 
-example:
-    @mcp.tool
-    @filterable
-    async def list_records(collection: str) -> list[dict]:
-        ...
-
-    # client can call with:
-    # list_records(collection="app.bsky.feed.post", _filter="[*].{uri: uri, text: value.text}")
+See https://jmespath.org for filter syntax.
 """
 
 import inspect

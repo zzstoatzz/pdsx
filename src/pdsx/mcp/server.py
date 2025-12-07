@@ -291,10 +291,6 @@ async def create_record(
 ) -> CreateResponse:
     """create a new record. requires authentication.
 
-    examples:
-    - create_record("app.bsky.feed.post", {"text": "hello world!"})
-    - create_record("app.bsky.feed.like", {"subject": {"uri": "...", "cid": "..."}})
-
     args:
         collection: the collection to create in (e.g., 'app.bsky.feed.post')
         record: the record data. $type and createdAt are auto-added if missing.
@@ -318,10 +314,6 @@ async def update_record(
     """update an existing record. requires authentication.
 
     fetches the current record, merges your updates, and puts it back.
-
-    examples:
-    - update_record("app.bsky.actor.profile/self", {"description": "new bio!"})
-    - update_record("at://did:plc:.../app.bsky.feed.post/abc", {"text": "edited"})
 
     args:
         uri: full AT-URI or shorthand (collection/rkey)

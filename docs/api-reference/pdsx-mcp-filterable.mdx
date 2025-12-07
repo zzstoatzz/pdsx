@@ -8,23 +8,16 @@ sidebarTitle: filterable
 
 filterable decorator for MCP tools.
 
-adds a `_filter` parameter that accepts jmespath expressions to
-filter/project tool results. reduces response size and lets
+Adds a `_filter` parameter that accepts jmespath expressions to
+filter/project tool results. Reduces response size and lets
 LLM clients request only the fields they need.
 
-example:
-    @mcp.tool
-    @filterable
-    async def list_records(collection: str) -> list\[dict]:
-        ...
-
-    # client can call with:
-    # list_records(collection="app.bsky.feed.post", _filter="[*].{uri: uri, text: value.text}")
+See https://jmespath.org for filter syntax.
 
 
 ## Functions
 
-### `apply_filter` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/filterable.py#L42" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `apply_filter` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/filterable.py#L35" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 apply_filter(data: Any, filter_expr: str | None) -> Any
@@ -34,7 +27,7 @@ apply_filter(data: Any, filter_expr: str | None) -> Any
 apply jmespath filter to data.
 
 
-### `filterable` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/filterable.py#L65" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `filterable` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/filterable.py#L58" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 filterable(fn: Callable[P, R] | Callable[P, Awaitable[R]]) -> Callable[P, Any] | Callable[P, Awaitable[Any]]
