@@ -7,3 +7,37 @@ sidebarTitle: __init__
 
 
 pdsx MCP server for atproto record operations.
+
+## Functions
+
+### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/__init__.py#L6" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+main() -> None
+```
+
+
+entry point for pdsx-mcp command.
+
+requires the [mcp] extra: pip install pdsx[mcp] or uv add pdsx[mcp]
+
+
+### `_lazy_imports` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/__init__.py#L31" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_lazy_imports()
+```
+
+
+lazy imports for when the module is imported directly.
+
+
+### `__getattr__` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/__init__.py#L62" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+__getattr__(name: str)
+```
+
+
+lazy attribute access - only imports if fastmcp is available.
+

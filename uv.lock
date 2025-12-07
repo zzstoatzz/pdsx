@@ -754,15 +754,21 @@ name = "pdsx"
 source = { editable = "." }
 dependencies = [
     { name = "atproto" },
-    { name = "fastmcp" },
-    { name = "jmespath" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
     { name = "rich" },
 ]
 
+[package.optional-dependencies]
+mcp = [
+    { name = "fastmcp" },
+    { name = "jmespath" },
+]
+
 [package.dev-dependencies]
 dev = [
+    { name = "fastmcp" },
+    { name = "jmespath" },
     { name = "mdxify" },
     { name = "prek" },
     { name = "pytest" },
@@ -776,15 +782,18 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "atproto", specifier = ">=0.0.63" },
-    { name = "fastmcp", specifier = ">=2.0" },
-    { name = "jmespath", specifier = ">=1.0" },
+    { name = "fastmcp", marker = "extra == 'mcp'", specifier = ">=2.0" },
+    { name = "jmespath", marker = "extra == 'mcp'", specifier = ">=1.0" },
     { name = "pydantic-settings", specifier = ">=2.7.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rich", specifier = ">=13.0.0" },
 ]
+provides-extras = ["mcp"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "fastmcp", specifier = ">=2.0" },
+    { name = "jmespath", specifier = ">=1.0" },
     { name = "mdxify", specifier = ">=0.2.34" },
     { name = "prek", specifier = ">=0.2.0" },
     { name = "pytest", specifier = ">=8.3.0" },
