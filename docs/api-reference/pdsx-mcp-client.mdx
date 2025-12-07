@@ -26,7 +26,7 @@ extract credentials from fastmcp context if available.
 ### `get_atproto_client` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L78" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
-get_atproto_client(require_auth: bool = False, operation: str = 'this operation') -> AsyncIterator[AsyncClient]
+get_atproto_client(require_auth: bool = False, operation: str = 'this operation', target_repo: str | None = None) -> AsyncIterator[AsyncClient]
 ```
 
 
@@ -37,6 +37,9 @@ context state by AtprotoAuthMiddleware). if found, creates an authenticated
 client. otherwise falls back to ATPROTO_HANDLE/ATPROTO_PASSWORD environment
 variables.
 
+when target_repo is provided and no auth is required, automatically discovers
+and uses the correct PDS for that user (handles users on self-hosted PDS).
+
 this enables both:
 - multi-tenant http deployments (credentials per request via headers)
 - traditional stdio deployments (credentials from environment)
@@ -44,12 +47,13 @@ this enables both:
 **Args:**
 - `require_auth`: if True, raises AuthenticationRequired when no credentials
 - `operation`: description of the operation for error messages
+- `target_repo`: handle or DID to read from (triggers PDS discovery when set)
 
 **Raises:**
 - `AuthenticationRequired`: if require_auth=True and no credentials available
 
 
-### `get_repo_from_context` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L132" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `get_repo_from_context` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L165" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 get_repo_from_context() -> str | None

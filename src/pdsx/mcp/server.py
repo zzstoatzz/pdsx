@@ -238,6 +238,7 @@ async def list_records(
     async with get_atproto_client(
         require_auth=require_auth,
         operation="listing your own records",
+        target_repo=repo_override,
     ) as client:
         response = await _list_records(
             client, collection, limit, repo=repo_override, cursor=cursor
@@ -274,9 +275,17 @@ async def get_record(
     is_full_uri = uri.startswith("at://")
     require_auth = not is_full_uri and repo_override is None
 
+    # determine target repo for PDS discovery
+    # if full URI, extract repo from it; otherwise use repo_override
+    target_repo = repo_override
+    if is_full_uri and not target_repo:
+        # extract repo from at://repo/collection/rkey
+        target_repo = uri.replace("at://", "").split("/")[0]
+
     async with get_atproto_client(
         require_auth=require_auth,
         operation="getting your own record",
+        target_repo=target_repo,
     ) as client:
         response = await _get_record(client, uri, repo=repo_override)
         return RecordResponse(

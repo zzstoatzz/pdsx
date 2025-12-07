@@ -163,3 +163,45 @@ class TestMcpServerImports:
         assert filterable is not None
         assert get_atproto_client is not None
         assert mcp is not None
+
+
+class TestGetAtprotoClient:
+    """tests for get_atproto_client with PDS discovery."""
+
+    async def test_pds_discovery_for_target_repo(self):
+        """discovers correct PDS when target_repo is provided."""
+        from pdsx.mcp.client import get_atproto_client
+
+        # should discover pds.zzstoatzz.io for this user
+        async with get_atproto_client(target_repo="zzstoatzz.io") as client:
+            assert "pds.zzstoatzz.io" in client._base_url
+
+    async def test_pds_discovery_standard_user(self):
+        """uses bsky network PDS for standard users."""
+        from pdsx.mcp.client import get_atproto_client
+
+        async with get_atproto_client(target_repo="jay.bsky.team") as client:
+            assert "bsky.network" in client._base_url
+
+    async def test_default_pds_when_no_target(self):
+        """uses default bsky.social when no target_repo."""
+        from pdsx.mcp.client import get_atproto_client
+
+        async with get_atproto_client() as client:
+            assert "bsky.social" in client._base_url
+
+    async def test_skips_auth_when_reading_other_pds(self, monkeypatch):
+        """doesn't try to authenticate when reading from another user's PDS."""
+
+        from pdsx.mcp.client import get_atproto_client
+
+        # simulate having credentials configured (like via headers)
+        monkeypatch.setenv("ATPROTO_HANDLE", "someone.bsky.social")
+        monkeypatch.setenv("ATPROTO_PASSWORD", "fake-password")
+
+        # should discover zzstoatzz.io's PDS and NOT try to login
+        # (because our bsky.social credentials won't work on their PDS)
+        async with get_atproto_client(target_repo="zzstoatzz.io") as client:
+            assert "pds.zzstoatzz.io" in client._base_url
+            # client.me is None when not authenticated
+            assert client.me is None
