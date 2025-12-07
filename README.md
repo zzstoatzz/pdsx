@@ -49,12 +49,12 @@ the easiest way to use pdsx with claude code:
 
 ```bash
 # read-only access (no auth needed for public data)
-claude mcp add-json pdsx '{"type": "http", "url": "https://pdsx.fastmcp.app/mcp"}'
+claude mcp add-json pdsx '{"type": "http", "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp"}'
 
 # with authentication for write operations
 claude mcp add-json pdsx '{
   "type": "http",
-  "url": "https://pdsx.fastmcp.app/mcp",
+  "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp",
   "headers": {
     "x-atproto-handle": "your.handle",
     "x-atproto-password": "your-app-password"
@@ -72,7 +72,7 @@ if you're running your own PDS, add the `x-atproto-pds-url` header:
 ```bash
 claude mcp add-json pdsx '{
   "type": "http",
-  "url": "https://pdsx.fastmcp.app/mcp",
+  "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp",
   "headers": {
     "x-atproto-handle": "your.handle",
     "x-atproto-password": "your-app-password",
