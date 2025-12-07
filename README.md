@@ -8,8 +8,10 @@ general-purpose cli for atproto record operations
 
 ```bash
 uv add pdsx
-# or
+# or run directly
 uvx pdsx --help
+# or from GitHub (latest)
+uvx --from git+https://github.com/zzstoatzz/pdsx pdsx --help
 ```
 
 ## quick start
@@ -92,19 +94,26 @@ pdsx-mcp
 
 </details>
 
-### local/self-hosted
+<details>
+<summary>local/self-hosted</summary>
 
-run the MCP server locally:
+run the MCP server locally (requires `pdsx[mcp]` extra):
 
 ```bash
+# install with mcp extra
+uv add pdsx[mcp]
+
 # stdio mode (for local development)
 ATPROTO_HANDLE=your.handle ATPROTO_PASSWORD=your-app-password pdsx-mcp
 
-# or run with uvx
-uvx pdsx-mcp
+# or run with uvx (no install needed)
+uvx --with 'pdsx[mcp]' pdsx-mcp
 ```
 
-### available tools
+</details>
+
+<details>
+<summary>available tools</summary>
 
 | tool | auth required | description |
 |------|--------------|-------------|
@@ -115,6 +124,8 @@ uvx pdsx-mcp
 | `delete_record` | yes | delete a record |
 
 all tools support jmespath filtering via the `_filter` parameter to reduce response size.
+
+</details>
 
 <details>
 <summary>usage examples</summary>
