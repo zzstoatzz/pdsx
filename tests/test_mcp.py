@@ -1,5 +1,7 @@
 """tests for pdsx MCP server."""
 
+import json
+
 from pdsx.mcp._types import (
     CreateResponse,
     CredentialsContext,
@@ -9,6 +11,7 @@ from pdsx.mcp._types import (
 )
 from pdsx.mcp.client import AUTH_HELP, AuthenticationRequired
 from pdsx.mcp.filterable import apply_filter, filterable
+from pdsx.mcp.server import _clean_value
 
 
 class TestFilterable:
@@ -205,3 +208,65 @@ class TestGetAtprotoClient:
             assert "pds.zzstoatzz.io" in client._base_url
             # client.me is None when not authenticated
             assert client.me is None
+
+
+class TestCleanValue:
+    """tests for _clean_value helper."""
+
+    def test_clean_value_handles_to_dict_objects(self):
+        """converts objects with to_dict() method (like atproto's DotDict)."""
+
+        class DotDictLike:
+            """mock object similar to atproto's DotDict with to_dict() method."""
+
+            def __init__(self, data):
+                self._data = data
+
+            def to_dict(self):
+                """recursively convert to plain dict."""
+                result = {}
+                for k, v in self._data.items():
+                    if hasattr(v, "to_dict"):
+                        result[k] = v.to_dict()
+                    elif isinstance(v, list):
+                        result[k] = [
+                            i.to_dict() if hasattr(i, "to_dict") else i for i in v
+                        ]
+                    else:
+                        result[k] = v
+                return result
+
+        value = DotDictLike(
+            {
+                "name": "test record",
+                "$type": "fm.plyr.dev.list",
+                "items": [
+                    DotDictLike({"uri": "at://...", "cid": "baf..."}),
+                ],
+                "createdAt": "2025-01-01T00:00:00Z",
+            }
+        )
+
+        cleaned = _clean_value(value)
+
+        # should be JSON serializable
+        json_str = json.dumps(cleaned)
+        assert "test record" in json_str
+        assert "at://..." in json_str
+
+    def test_clean_value_removes_null_fields(self):
+        """null fields are removed from output."""
+        value = {"text": "hello", "embed": None, "labels": None}
+        cleaned = _clean_value(value)
+
+        assert "text" in cleaned
+        assert "embed" not in cleaned
+        assert "labels" not in cleaned
+
+    def test_clean_value_removes_type_field(self):
+        """$type field is removed from output."""
+        value = {"$type": "app.bsky.feed.post", "text": "hello"}
+        cleaned = _clean_value(value)
+
+        assert "$type" not in cleaned
+        assert cleaned["text"] == "hello"
