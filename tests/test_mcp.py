@@ -241,6 +241,57 @@ class TestCleanValue:
         assert "embed" not in cleaned
         assert "labels" not in cleaned
 
+    def test_clean_value_handles_real_atproto_dotdict(self):
+        """handles atproto's DotDict which has model_dump=None."""
+        from atproto_client.models.dot_dict import DotDict
+
+        # DotDict has model_dump attribute but it's None (not callable)
+        value = DotDict(
+            {
+                "text": "hello from dotdict",
+                "$type": "fm.plyr.dev.list",
+                "items": [{"uri": "at://...", "name": "test"}],
+                "createdAt": "2025-01-01T00:00:00Z",
+                "nullField": None,
+            }
+        )
+
+        # verify DotDict has the problematic model_dump=None
+        assert hasattr(value, "model_dump")
+        assert value.model_dump is None
+        assert not callable(value.model_dump)
+
+        cleaned = _clean_value(value)
+
+        # should be JSON serializable
+        json_str = json.dumps(cleaned)
+        assert "hello from dotdict" in json_str
+
+        # should have cleaned up
+        assert "$type" not in cleaned
+        assert "nullField" not in cleaned
+
+    def test_clean_value_handles_nested_dotdict(self):
+        """handles nested DotDict structures."""
+        from atproto_client.models.dot_dict import DotDict
+
+        value = DotDict(
+            {
+                "name": "playlist",
+                "items": [
+                    DotDict({"uri": "at://1", "title": "song1"}),
+                    DotDict({"uri": "at://2", "title": "song2"}),
+                ],
+            }
+        )
+
+        cleaned = _clean_value(value)
+
+        # should be JSON serializable
+        json_str = json.dumps(cleaned)
+        assert "playlist" in json_str
+        assert "at://1" in json_str
+
     def test_clean_value_removes_null_fields(self):
         """null fields are removed from output."""
         value = {"text": "hello", "embed": None, "labels": None}
