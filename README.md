@@ -64,6 +64,28 @@ get an app password at: https://bsky.app/settings/app-passwords
 
 📚 **[full MCP documentation](https://pdsx.zzstoatzz.io/guides/mcp-server)** - local setup, custom PDS, available tools, filtering, and more
 
+### running the MCP server locally
+
+run the MCP server locally with `uvx`:
+
+```bash
+uvx --from 'pdsx[mcp]' pdsx-mcp
+```
+
+to add it to claude code as a local stdio server:
+
+```bash
+claude mcp add pdsx -- uvx --from 'pdsx[mcp]' pdsx-mcp
+```
+
+for authenticated writes, set environment variables:
+
+```bash
+export ATPROTO_HANDLE=your.handle
+export ATPROTO_PASSWORD=your-app-password
+claude mcp add pdsx -- uvx --from 'pdsx[mcp]' pdsx-mcp
+```
+
 <details>
 <summary>usage examples</summary>
 
