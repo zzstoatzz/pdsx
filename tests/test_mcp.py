@@ -213,46 +213,33 @@ class TestGetAtprotoClient:
 class TestCleanValue:
     """tests for _clean_value helper."""
 
-    def test_clean_value_handles_to_dict_objects(self):
-        """converts objects with to_dict() method (like atproto's DotDict)."""
+    def test_clean_value_handles_pydantic_models(self):
+        """converts Pydantic models to plain dict using model_dump."""
+        from pydantic import BaseModel
 
-        class DotDictLike:
-            """mock object similar to atproto's DotDict with to_dict() method."""
+        class PostRecord(BaseModel):
+            text: str
+            createdAt: str
+            embed: str | None = None
+            labels: str | None = None
 
-            def __init__(self, data):
-                self._data = data
+            model_config = {"populate_by_name": True}
 
-            def to_dict(self):
-                """recursively convert to plain dict."""
-                result = {}
-                for k, v in self._data.items():
-                    if hasattr(v, "to_dict"):
-                        result[k] = v.to_dict()
-                    elif isinstance(v, list):
-                        result[k] = [
-                            i.to_dict() if hasattr(i, "to_dict") else i for i in v
-                        ]
-                    else:
-                        result[k] = v
-                return result
-
-        value = DotDictLike(
-            {
-                "name": "test record",
-                "$type": "fm.plyr.dev.list",
-                "items": [
-                    DotDictLike({"uri": "at://...", "cid": "baf..."}),
-                ],
-                "createdAt": "2025-01-01T00:00:00Z",
-            }
+        value = PostRecord(
+            text="hello world",
+            createdAt="2025-01-01T00:00:00Z",
+            embed=None,
+            labels=None,
         )
 
         cleaned = _clean_value(value)
 
-        # should be JSON serializable
+        # should be JSON serializable and cleaned
         json_str = json.dumps(cleaned)
-        assert "test record" in json_str
-        assert "at://..." in json_str
+        assert "hello world" in json_str
+        # null fields should be removed
+        assert "embed" not in cleaned
+        assert "labels" not in cleaned
 
     def test_clean_value_removes_null_fields(self):
         """null fields are removed from output."""
