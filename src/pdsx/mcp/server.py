@@ -48,9 +48,12 @@ def _clean_value(value: Any) -> dict[str, Any]:
     - byte indices from facets (keeps just links/mentions)
     - verbose reply structure (keeps just uris)
     """
-    # convert Pydantic models to plain dict
-    if hasattr(value, "model_dump"):
+    # convert to plain dict - Pydantic models use model_dump, DotDict uses to_dict
+    # note: DotDict has model_dump=None (not callable), so check callable()
+    if hasattr(value, "model_dump") and callable(value.model_dump):
         value = value.model_dump(mode="json", by_alias=True)
+    elif hasattr(value, "to_dict") and callable(value.to_dict):
+        value = value.to_dict()
 
     if not isinstance(value, dict):
         return {"raw": value}
