@@ -78,12 +78,10 @@ to add it to claude code as a local stdio server:
 claude mcp add pdsx -- uvx --from 'pdsx[mcp]' pdsx-mcp
 ```
 
-for authenticated writes, set environment variables:
+for authenticated writes, use the `-e` flag:
 
 ```bash
-export ATPROTO_HANDLE=your.handle
-export ATPROTO_PASSWORD=your-app-password
-claude mcp add pdsx -- uvx --from 'pdsx[mcp]' pdsx-mcp
+claude mcp add pdsx -e ATPROTO_HANDLE=your.handle -e ATPROTO_PASSWORD=your-app-password -- uvx --from 'pdsx[mcp]' pdsx-mcp
 ```
 
 <details>
