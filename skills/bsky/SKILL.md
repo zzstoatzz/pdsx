@@ -5,55 +5,67 @@ description: Use this when working with BlueSky - fetching threads, reading post
 
 # BlueSky with pdsx
 
-Use the pdsx MCP tools (`list_records`, `get_record`, `create_record`, etc.) for BlueSky tasks.
+Use the pdsx MCP tools (`list_records`, `get_record`, `create_record`) for BlueSky tasks.
+
+## IMPORTANT: Avoid Context Flooding
+
+**Always use small limits and project to needed fields.** Large responses will exceed token limits.
+
+```python
+# BAD - returns too much data
+list_records("app.bsky.feed.post", repo="someone", limit=100)
+
+# GOOD - small limit, only the fields you need
+list_records("app.bsky.feed.post", repo="someone", limit=10,
+             _filter="[*].{uri: uri, text: value.text, reply: value.reply}")
+```
+
+**Rules:**
+1. **Start with `limit=10` or less** - never use limit > 20 on first call
+2. **Always use `_filter` to select only needed fields** - don't fetch full records
+3. **Use `get_record` when you have a URI** - don't list and search
+4. **`_filter` runs AFTER fetch** - it reduces output, not what's fetched from the API
 
 ## Quick Reference
 
 | Task | Tool | Example |
 |------|------|---------|
-| get a post | `get_record` | `get_record(uri="at://did:plc:xxx/app.bsky.feed.post/abc123")` |
-| list someone's posts | `list_records` | `list_records("app.bsky.feed.post", repo="handle.bsky.social")` |
-| get a profile | `get_record` | `get_record(uri="app.bsky.actor.profile/self", repo="handle.bsky.social")` |
-| create a post | `create_record` | `create_record("app.bsky.feed.post", {"text": "hello"})` |
+| get a specific post | `get_record` | `get_record(uri="at://did:plc:xxx/app.bsky.feed.post/abc123")` |
+| list posts (small batch) | `list_records` | `list_records("app.bsky.feed.post", repo="handle", limit=10, _filter="[*].{uri: uri, text: value.text}")` |
+| get a profile | `get_record` | `get_record(uri="app.bsky.actor.profile/self", repo="handle")` |
 
 ## Following Threads
 
-Threads span multiple users. Pattern:
+**Start by getting the specific post you have:**
 
-1. **Get the root post** to see its content and who posted it:
-   ```python
-   get_record(uri="at://did:plc:xxx/app.bsky.feed.post/abc123")
-   ```
+```python
+get_record(uri="at://did:plc:xxx/app.bsky.feed.post/abc123")
+```
 
-2. **List the OP's posts** and filter for replies to extract participant DIDs:
-   ```python
-   list_records("app.bsky.feed.post", repo="did:plc:xxx", _filter="[?reply].reply.parent.uri")
-   ```
+Then get a small sample of the OP's posts to find thread participants:
 
-3. **Extract DIDs** from the URIs (format: `at://DID/collection/rkey`)
+```python
+list_records("app.bsky.feed.post", repo="did:plc:xxx", limit=10,
+             _filter="[?value.reply].{uri: uri, reply: value.reply}")
+```
 
-4. **Query each participant's posts** for their contributions to the thread:
-   ```python
-   list_records("app.bsky.feed.post", repo="did:plc:other", _filter="[?reply.root.uri=='at://did:plc:xxx/app.bsky.feed.post/abc123']")
-   ```
+Extract DIDs from reply URIs (format: `at://DID/collection/rkey`), then query each participant with small limits.
 
 ## Collections
 
 | Collection | Purpose |
 |------------|---------|
 | `app.bsky.feed.post` | posts |
-| `app.bsky.actor.profile` | profile (rkey is always `self`) |
+| `app.bsky.actor.profile` | profile (rkey always `self`) |
 | `app.bsky.feed.like` | likes |
 | `app.bsky.feed.repost` | reposts |
 | `app.bsky.graph.follow` | follows |
 
 ## Post Structure
 
-Posts reference other posts via `reply`:
-
 ```json
 {
-  "text": "reply text",
+  "text": "post text",
   "reply": {
     "root": {"uri": "at://did/collection/rkey", "cid": "bafyrei..."},
     "parent": {"uri": "at://did/collection/rkey", "cid": "bafyrei..."}
@@ -61,17 +73,26 @@ Posts reference other posts via `reply`:
 }
 ```
 
-- `reply.root` - thread's original post
-- `reply.parent` - immediate parent being replied to
+## Useful `_filter` Patterns
+
+```python
+# just URIs and text (minimal output)
+_filter="[*].{uri: uri, text: value.text}"
+
+# posts with replies only, showing reply info
+_filter="[?value.reply].{uri: uri, text: value.text, reply: value.reply}"
+
+# just URIs
+_filter="[*].uri"
+```
 
 ## Creating Posts
 
-Simple:
 ```python
 create_record("app.bsky.feed.post", {"text": "hello world"})
 ```
 
-Reply (requires both uri AND cid from the parent/root posts):
+Reply (needs uri AND cid from parent):
 ```python
 create_record("app.bsky.feed.post", {
     "text": "my reply",
@@ -81,24 +102,3 @@ create_record("app.bsky.feed.post", {
     }
 })
 ```
-
-## Filtering with `_filter`
-
-The `_filter` parameter uses JMESPath:
-
-```python
-# just the text from posts
-list_records(..., _filter="[*].text")
-
-# reply URIs only
-list_records(..., _filter="[?reply].reply.parent.uri")
-
-# posts with specific text
-list_records(..., _filter="[?contains(text, 'keyword')]")
-```
-
-## Gotchas
-
-1. **strongRef needs uri AND cid** - when creating replies, you need both from the parent post
-2. **profile rkey is always `self`** - use `app.bsky.actor.profile/self`
-3. **byte indices for facets** - links/mentions use UTF-8 byte positions, not character positions
