@@ -1,5 +1,6 @@
 """pdsx MCP server implementation using fastmcp."""
 
+import json
 from typing import Any
 
 from fastmcp import FastMCP
@@ -33,6 +34,10 @@ from pdsx.mcp.client import (
 )
 from pdsx.mcp.filterable import filterable
 from pdsx.mcp.middleware import AtprotoAuthMiddleware
+
+# response size limits to prevent context flooding in LLM clients
+MAX_LIMIT = 25  # max records per request (can paginate for more)
+MAX_RESPONSE_CHARS = 30000  # truncate responses larger than this
 
 mcp = FastMCP("pdsx")
 
@@ -107,6 +112,44 @@ def _clean_value(value: Any) -> dict[str, Any]:
         result[k] = v
 
     return result
+
+
+def _truncate_list_response(
+    records: list[RecordResponse],
+    total_fetched: int,
+    has_more: bool,
+) -> list[RecordResponse] | dict[str, Any]:
+    """truncate list response if it exceeds size limits.
+
+    returns either the original list or a dict with truncated results and a message.
+    """
+    # serialize to check size
+    try:
+        response_json = json.dumps(records, default=str)
+    except (TypeError, ValueError):
+        return records
+
+    if len(response_json) <= MAX_RESPONSE_CHARS:
+        return records
+
+    # truncate by removing records until under limit
+    truncated = list(records)
+    while truncated and len(json.dumps(truncated, default=str)) > MAX_RESPONSE_CHARS:
+        truncated.pop()
+
+    shown = len(truncated)
+    msg = f"response truncated: showing {shown} of {total_fetched} records"
+    if has_more:
+        msg += " (more available via cursor)"
+    msg += '. use _filter to select specific fields, e.g. _filter="[*].{uri: uri, text: value.text}"'
+
+    return {
+        "records": truncated,
+        "truncated": True,
+        "message": msg,
+        "shown": shown,
+        "fetched": total_fetched,
+    }
 
 
 # -----------------------------------------------------------------------------
@@ -219,10 +262,10 @@ the createdAt field is auto-added if not provided.
 @filterable
 async def list_records(
     collection: str,
-    limit: int = 50,
+    limit: int = 10,
     repo: str | None = None,
     cursor: str | None = None,
-) -> list[RecordResponse]:
+) -> list[RecordResponse] | dict[str, Any]:
     """list records in a collection.
 
     examples:
@@ -232,13 +275,16 @@ async def list_records(
 
     args:
         collection: the collection to list (e.g., 'app.bsky.feed.post')
-        limit: max records to return (default 50)
+        limit: max records to return (default 10, max 25)
         repo: handle or DID to read from. if not provided, reads your own records (requires auth)
         cursor: pagination cursor from previous response
 
     returns:
         list of records with uri, cid, and value fields
     """
+    # cap limit to prevent context flooding
+    effective_limit = min(limit, MAX_LIMIT)
+
     repo_override = repo or get_repo_from_context()
     require_auth = repo_override is None
 
@@ -248,12 +294,17 @@ async def list_records(
         target_repo=repo_override,
     ) as client:
         response = await _list_records(
-            client, collection, limit, repo=repo_override, cursor=cursor
+            client, collection, effective_limit, repo=repo_override, cursor=cursor
         )
-        return [
+        records = [
             RecordResponse(uri=r.uri, cid=r.cid, value=_clean_value(r.value))
             for r in response.records
         ]
+        return _truncate_list_response(
+            records,
+            total_fetched=len(records),
+            has_more=response.cursor is not None,
+        )
 
 
 @mcp.tool

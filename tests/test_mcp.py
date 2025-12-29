@@ -11,7 +11,12 @@ from pdsx.mcp._types import (
 )
 from pdsx.mcp.client import AUTH_HELP, AuthenticationRequired
 from pdsx.mcp.filterable import apply_filter, filterable
-from pdsx.mcp.server import _clean_value
+from pdsx.mcp.server import (
+    MAX_LIMIT,
+    MAX_RESPONSE_CHARS,
+    _clean_value,
+    _truncate_list_response,
+)
 
 
 class TestFilterable:
@@ -308,3 +313,77 @@ class TestCleanValue:
 
         assert "$type" not in cleaned
         assert cleaned["text"] == "hello"
+
+
+class TestContextFloodingProtection:
+    """tests for context flooding protection in the MCP server."""
+
+    def test_max_limit_constant_exists(self):
+        """MAX_LIMIT constant is defined."""
+        assert MAX_LIMIT == 25
+
+    def test_max_response_chars_constant_exists(self):
+        """MAX_RESPONSE_CHARS constant is defined."""
+        assert MAX_RESPONSE_CHARS == 30000
+
+    def test_truncate_response_small_response_unchanged(self):
+        """small responses pass through unchanged."""
+        records = [
+            RecordResponse(uri="at://test/post/1", cid="cid1", value={"text": "hi"}),
+            RecordResponse(uri="at://test/post/2", cid="cid2", value={"text": "hello"}),
+        ]
+        result = _truncate_list_response(records, total_fetched=2, has_more=False)
+
+        # should return the original list unchanged
+        assert result == records
+
+    def test_truncate_response_large_response_truncated(self):
+        """large responses are truncated with a message."""
+        # create records that exceed the limit
+        large_text = "x" * 2000  # 2KB per record
+        records = [
+            RecordResponse(
+                uri=f"at://test/post/{i}",
+                cid=f"cid{i}",
+                value={"text": f"{large_text}_{i}"},
+            )
+            for i in range(50)  # ~100KB total
+        ]
+        result = _truncate_list_response(records, total_fetched=50, has_more=True)
+
+        # should be a dict with truncated records
+        assert isinstance(result, dict)
+        assert "records" in result
+        assert "truncated" in result
+        assert result["truncated"] is True
+        assert "message" in result
+        assert "shown" in result
+        assert "fetched" in result
+
+        # truncated list should be smaller
+        assert len(result["records"]) < 50
+
+        # serialized should be under limit
+        serialized = json.dumps(result["records"], default=str)
+        assert len(serialized) <= MAX_RESPONSE_CHARS
+
+        # message should mention pagination
+        assert "cursor" in result["message"]
+        assert "_filter" in result["message"]
+
+    def test_truncate_response_no_more_available(self):
+        """truncation message differs when no more records available."""
+        large_text = "x" * 2000
+        records = [
+            RecordResponse(
+                uri=f"at://test/post/{i}",
+                cid=f"cid{i}",
+                value={"text": f"{large_text}_{i}"},
+            )
+            for i in range(50)
+        ]
+        result = _truncate_list_response(records, total_fetched=50, has_more=False)
+
+        assert isinstance(result, dict)
+        # message should NOT mention cursor when no more available
+        assert "more available via cursor" not in result["message"]
