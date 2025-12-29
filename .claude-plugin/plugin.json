@@ -1,0 +1,18 @@
+{
+  "name": "pdsx",
+  "description": "ATProto record operations - generic MCP server for reading/writing records, with skills for specific apps",
+  "author": {
+    "name": "zzstoatzz",
+    "email": "thrast36@gmail.com",
+    "url": "https://github.com/zzstoatzz"
+  },
+  "repository": "https://github.com/zzstoatzz/pdsx",
+  "keywords": [
+    "atproto",
+    "bluesky",
+    "records",
+    "pds",
+    "decentralized"
+  ],
+  "mcpServers": "./.mcp.json"
+}

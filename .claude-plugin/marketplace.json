@@ -1,0 +1,15 @@
+{
+  "name": "pdsx",
+  "owner": {
+    "name": "zzstoatzz",
+    "email": "thrast36@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "pdsx",
+      "description": "ATProto record operations - generic MCP server for reading/writing records, with skills for specific apps",
+      "source": "./",
+      "skills": ["./skills/bsky"]
+    }
+  ]
+}
