@@ -1,0 +1,6 @@
+{
+  "pdsx": {
+    "command": "uvx",
+    "args": ["--from", "pdsx[mcp]", "pdsx-mcp"]
+  }
+}
