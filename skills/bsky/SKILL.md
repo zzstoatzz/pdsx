@@ -1,6 +1,6 @@
 ---
 name: bsky
-description: BlueSky patterns for pdsx. Covers record structures, threading, and when to use pdsx vs AppView APIs.
+description: Use this when working with BlueSky - fetching threads, reading posts, creating content. Shows you how to use pdsx MCP tools for the task.
 ---
 
 # BlueSky with pdsx
