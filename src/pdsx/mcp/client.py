@@ -46,11 +46,11 @@ def _get_credentials_from_context() -> CredentialsContext:
 AUTH_HELP = """\
 authentication required but no credentials provided.
 
-for read operations, you can pass the 'repo' parameter instead:
-  list_records(collection="app.bsky.feed.post", repo="user.handle")
-  get_record(uri="collection/rkey", repo="user.handle")
+to authenticate, set headers when configuring the MCP server:
+  - x-atproto-handle: your atproto handle (e.g., 'you.bsky.social')
+  - x-atproto-password: your atproto app password
 
-to authenticate for write operations, set headers:
+example claude code configuration:
   claude mcp add-json pdsx '{
     "type": "http",
     "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp",
@@ -60,7 +60,11 @@ to authenticate for write operations, set headers:
     }
   }'
 
-see https://pdsx.zzstoatzz.io/guides/mcp-server for full documentation."""
+for local/stdio usage, set environment variables instead:
+  export ATPROTO_HANDLE=your.handle
+  export ATPROTO_PASSWORD=your-app-password
+
+see https://pdsx.zzstoatzz.io for full documentation."""
 
 
 class AuthenticationRequired(Exception):

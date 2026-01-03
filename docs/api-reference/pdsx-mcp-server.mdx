@@ -48,7 +48,7 @@ usage_guide() -> str
 instructions for using pdsx MCP tools.
 
 
-### `create_post_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L207" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `create_post_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L205" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 create_post_guide() -> str
@@ -58,7 +58,7 @@ create_post_guide() -> str
 instructions for creating posts.
 
 
-### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L263" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L261" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 list_records(collection: str, limit: int = 10, repo: str | None = None, cursor: str | None = None) -> list[RecordResponse] | dict[str, Any]
@@ -70,12 +70,11 @@ list records in a collection.
 examples:
 - list_records("app.bsky.feed.post", repo="zzstoatzz.io") - list someone's posts
 - list_records("app.bsky.actor.profile", repo="did:plc:...") - list by DID
-- list_records("app.bsky.feed.post") - list your own posts (requires auth)
 
 **Args:**
 - `collection`: the collection to list (e.g., 'app.bsky.feed.post')
 - `limit`: max records to return (default 10, max 25)
-- `repo`: handle or DID to read from. if not provided, reads your own records (requires auth)
+- `repo`: handle or DID to read from (required)
 - `cursor`: pagination cursor from previous response
 
 **Returns:**
@@ -93,18 +92,17 @@ get a specific record by uri.
 
 examples:
 - get_record("at://did:plc:.../app.bsky.feed.post/abc123")
-- get_record("app.bsky.feed.post/abc123") - shorthand (requires auth)
 - get_record("app.bsky.actor.profile/self", repo="zzstoatzz.io") - someone's profile
 
 **Args:**
 - `uri`: full AT-URI or shorthand (collection/rkey)
-- `repo`: when using shorthand uri, the repo to read from
+- `repo`: when using shorthand uri, the repo to read from (required for shorthand)
 
 **Returns:**
 - record with uri, cid, and value fields
 
 
-### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L355" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L356" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 create_record(collection: str, record: dict[str, Any]) -> CreateResponse
@@ -121,7 +119,7 @@ create a new record. requires authentication.
 - dict with uri and cid of created record
 
 
-### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L377" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L378" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 update_record(uri: str, updates: dict[str, Any]) -> UpdateResponse
@@ -140,7 +138,7 @@ fetches the current record, merges your updates, and puts it back.
 - dict with uri and cid of updated record
 
 
-### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L401" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L402" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 delete_record(uri: str) -> DeleteResponse
@@ -160,7 +158,7 @@ examples:
 - confirmation with deleted uri
 
 
-### `me_resource` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L432" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `me_resource` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L433" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 me_resource() -> str
@@ -170,7 +168,7 @@ me_resource() -> str
 current authenticated user identity.
 
 
-### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L448" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L449" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 main() -> None

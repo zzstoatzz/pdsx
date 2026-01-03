@@ -167,12 +167,10 @@ pdsx provides tools for atproto record operations (bluesky, etc).
 
 ## authentication
 
-some operations require authentication:
-- **read operations** with `repo` parameter: no auth needed
-- **read operations** without `repo`: auth needed (reads your own records)
-- **write operations** (create, update, delete): always require auth
+- **read operations**: no auth needed, just pass `repo` parameter
+- **write operations** (create, update, delete): require auth
 
-to authenticate, set these headers when configuring the MCP server:
+to authenticate for writes, set these headers when configuring the MCP server:
 - `x-atproto-handle`: your atproto handle (e.g., 'you.bsky.social')
 - `x-atproto-password`: your atproto app password (NOT your main password!)
 
@@ -271,12 +269,11 @@ async def list_records(
     examples:
     - list_records("app.bsky.feed.post", repo="zzstoatzz.io") - list someone's posts
     - list_records("app.bsky.actor.profile", repo="did:plc:...") - list by DID
-    - list_records("app.bsky.feed.post") - list your own posts (requires auth)
 
     args:
         collection: the collection to list (e.g., 'app.bsky.feed.post')
         limit: max records to return (default 10, max 25)
-        repo: handle or DID to read from. if not provided, reads your own records (requires auth)
+        repo: handle or DID to read from (required)
         cursor: pagination cursor from previous response
 
     returns:
@@ -285,16 +282,19 @@ async def list_records(
     # cap limit to prevent context flooding
     effective_limit = min(limit, MAX_LIMIT)
 
-    repo_override = repo or get_repo_from_context()
-    require_auth = repo_override is None
+    repo_to_use = repo or get_repo_from_context()
+    if not repo_to_use:
+        raise ValueError(
+            "repo parameter is required. example: "
+            'list_records("app.bsky.feed.post", repo="someone.bsky.social")'
+        )
 
     async with get_atproto_client(
-        require_auth=require_auth,
-        operation="listing your own records",
-        target_repo=repo_override,
+        require_auth=False,
+        target_repo=repo_to_use,
     ) as client:
         response = await _list_records(
-            client, collection, effective_limit, repo=repo_override, cursor=cursor
+            client, collection, effective_limit, repo=repo_to_use, cursor=cursor
         )
         records = [
             RecordResponse(uri=r.uri, cid=r.cid, value=_clean_value(r.value))
@@ -317,35 +317,36 @@ async def get_record(
 
     examples:
     - get_record("at://did:plc:.../app.bsky.feed.post/abc123")
-    - get_record("app.bsky.feed.post/abc123") - shorthand (requires auth)
     - get_record("app.bsky.actor.profile/self", repo="zzstoatzz.io") - someone's profile
 
     args:
         uri: full AT-URI or shorthand (collection/rkey)
-        repo: when using shorthand uri, the repo to read from
+        repo: when using shorthand uri, the repo to read from (required for shorthand)
 
     returns:
         record with uri, cid, and value fields
     """
-    repo_override = repo or get_repo_from_context()
-
-    # determine if auth is required
+    repo_to_use = repo or get_repo_from_context()
     is_full_uri = uri.startswith("at://")
-    require_auth = not is_full_uri and repo_override is None
+
+    # for shorthand URIs, repo is required
+    if not is_full_uri and not repo_to_use:
+        raise ValueError(
+            "repo parameter is required for shorthand URIs. example: "
+            'get_record("app.bsky.actor.profile/self", repo="someone.bsky.social")'
+        )
 
     # determine target repo for PDS discovery
-    # if full URI, extract repo from it; otherwise use repo_override
-    target_repo = repo_override
+    target_repo = repo_to_use
     if is_full_uri and not target_repo:
         # extract repo from at://repo/collection/rkey
         target_repo = uri.replace("at://", "").split("/")[0]
 
     async with get_atproto_client(
-        require_auth=require_auth,
-        operation="getting your own record",
+        require_auth=False,
         target_repo=target_repo,
     ) as client:
-        response = await _get_record(client, uri, repo=repo_override)
+        response = await _get_record(client, uri, repo=repo_to_use)
         return RecordResponse(
             uri=response.uri, cid=response.cid, value=_clean_value(response.value)
         )
