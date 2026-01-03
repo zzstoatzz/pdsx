@@ -192,17 +192,14 @@ async def async_main() -> int:
         description="atproto record operations",
         epilog="""
 examples:
-  # read anyone's posts (no auth needed)
+  # read posts (no auth needed, -r is required)
   pdsx -r zzstoatzz.io ls app.bsky.feed.post
 
   # read with DID (more durable than handle)
   pdsx -r did:plc:abc123 ls app.bsky.feed.post
 
-  # list your own records (requires auth)
-  pdsx --handle you.bsky.social --password xxxx-xxxx ls app.bsky.feed.post
-
   # create a record (requires auth)
-  pdsx --handle you.bsky.social create app.bsky.feed.post text='hello'
+  pdsx --handle you.bsky.social --password xxxx-xxxx create app.bsky.feed.post text='hello'
 
 note: -r flag goes BEFORE the command (ls, get, etc.)
       auth flags (--handle, --password) also go BEFORE the command
@@ -359,8 +356,16 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
         is_read = args.command in read_commands
         has_repo_target = args.repo is not None
 
-        # auth required if: doing a write operation OR doing a read without --repo
-        auth_needed = not is_read or not has_repo_target
+        # for reads without --repo, require the flag instead of falling back to auth
+        if is_read and not has_repo_target:
+            console.print(
+                "[red]error:[/red] -r/--repo is required for read operations\n"
+                f"example: pdsx -r someone.bsky.social {args.command} ..."
+            )
+            return 1
+
+        # auth required only for write operations
+        auth_needed = not is_read
 
         # create client with or without base_url depending on auth
         if auth_needed:
