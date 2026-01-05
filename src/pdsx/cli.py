@@ -356,8 +356,16 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
         is_read = args.command in read_commands
         has_repo_target = args.repo is not None
 
-        # for reads without --repo, require the flag instead of falling back to auth
-        if is_read and not has_repo_target:
+        # for get/cat, a full AT-URI contains the repo already
+        is_get_with_full_uri = (
+            args.command in ("get", "cat")
+            and hasattr(args, "uri")
+            and args.uri
+            and args.uri.startswith("at://")
+        )
+
+        # for reads without --repo (and not a full URI), require the flag
+        if is_read and not has_repo_target and not is_get_with_full_uri:
             console.print(
                 "[red]error:[/red] -r/--repo is required for read operations\n"
                 f"example: pdsx -r someone.bsky.social {args.command} ..."
@@ -381,10 +389,15 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
                 required=True,
             )
         else:
-            # for unauthenticated reads with -r, auto-discover PDS from handle/DID
-            pds_url = (
-                await discover_pds(args.repo) if args.repo else settings.atproto_pds_url
-            )
+            # for unauthenticated reads, auto-discover PDS
+            if args.repo:
+                pds_url = await discover_pds(args.repo)
+            elif is_get_with_full_uri:
+                # extract DID from at://did/collection/rkey
+                did = args.uri.replace("at://", "").split("/")[0]
+                pds_url = await discover_pds(did)
+            else:
+                pds_url = settings.atproto_pds_url
             client = AsyncClient(base_url=pds_url)
 
         if args.command in ("list", "ls"):
