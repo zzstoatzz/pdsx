@@ -221,8 +221,9 @@ def display_success(
         content += f"\n[dim]cid:[/dim] {cid}"
 
     # show web URL if we can generate one
-    if uri and handle:
-        web_url = get_web_url(uri, handle)
+    # uses handle if provided (more readable), falls back to DID from URI
+    if uri:
+        web_url = get_web_url(uri, handle=handle if handle else None)
         if web_url:
             content += f"\n[dim]url:[/dim] {web_url}"
 
