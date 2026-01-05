@@ -2,134 +2,180 @@
 
 from __future__ import annotations
 
+import pytest
+
 from pdsx._internal.web_url import get_web_url
 
 
-class TestBlueskyUrls:
-    """tests for bluesky URL patterns."""
+@pytest.mark.parametrize(
+    ("uri", "handle", "record", "expected"),
+    [
+        # bluesky - posts
+        (
+            "at://did:plc:abc/app.bsky.feed.post/xyz",
+            "alice.bsky.social",
+            None,
+            "https://bsky.app/profile/alice.bsky.social/post/xyz",
+        ),
+        (
+            "at://did:plc:abc/app.bsky.feed.post/xyz",
+            None,
+            None,
+            "https://bsky.app/profile/did:plc:abc/post/xyz",
+        ),
+        # bluesky - profile
+        (
+            "at://did:plc:abc/app.bsky.actor.profile/self",
+            "bob.bsky.social",
+            None,
+            "https://bsky.app/profile/bob.bsky.social",
+        ),
+        # bluesky - list
+        (
+            "at://did:plc:abc/app.bsky.graph.list/mylist",
+            "carol.bsky.social",
+            None,
+            "https://bsky.app/profile/carol.bsky.social/lists/mylist",
+        ),
+        # bluesky - feed generator
+        (
+            "at://did:plc:abc/app.bsky.feed.generator/myfeed",
+            "dave.bsky.social",
+            None,
+            "https://bsky.app/profile/dave.bsky.social/feed/myfeed",
+        ),
+        # bluesky - starter pack
+        (
+            "at://did:plc:abc/app.bsky.graph.starterpack/pack1",
+            "eve.bsky.social",
+            None,
+            "https://bsky.app/starter-pack/eve.bsky.social/pack1",
+        ),
+        # frontpage
+        (
+            "at://did:plc:abc/fyi.unravel.frontpage.post/mypost",
+            None,
+            None,
+            "https://frontpage.fyi/post/did:plc:abc/mypost",
+        ),
+        # pinksea
+        (
+            "at://did:plc:abc/com.shinolabs.pinksea.oekaki/drawing1",
+            None,
+            None,
+            "https://pinksea.art/did:plc:abc/oekaki/drawing1",
+        ),
+        (
+            "at://did:plc:abc/com.shinolabs.pinksea.profile/self",
+            None,
+            None,
+            "https://pinksea.art/did:plc:abc",
+        ),
+        # linkat
+        (
+            "at://did:plc:abc/blue.linkat.board/self",
+            None,
+            None,
+            "https://linkat.blue/did:plc:abc",
+        ),
+        # tangled
+        (
+            "at://did:plc:abc/sh.tangled.actor.profile/self",
+            None,
+            None,
+            "https://tangled.org/did:plc:abc",
+        ),
+        (
+            "at://did:plc:abc/sh.tangled.repo/rkey",
+            None,
+            {"name": "my-repo"},
+            "https://tangled.org/did:plc:abc/my-repo",
+        ),
+        (
+            "at://did:plc:abc/sh.tangled.repo/rkey",
+            None,
+            None,
+            None,  # needs record.name
+        ),
+        # leaflet
+        (
+            "at://did:plc:abc/pub.leaflet.document/doc1",
+            None,
+            None,
+            "https://leaflet.pub/p/did:plc:abc/doc1",
+        ),
+        (
+            "at://did:plc:abc/pub.leaflet.publication/pub1",
+            None,
+            None,
+            "https://leaflet.pub/lish/did:plc:abc/pub1",
+        ),
+    ],
+    ids=[
+        "bsky-post-with-handle",
+        "bsky-post-did-fallback",
+        "bsky-profile",
+        "bsky-list",
+        "bsky-feed",
+        "bsky-starterpack",
+        "frontpage-post",
+        "pinksea-oekaki",
+        "pinksea-profile",
+        "linkat-board",
+        "tangled-profile",
+        "tangled-repo-with-record",
+        "tangled-repo-no-record",
+        "leaflet-document",
+        "leaflet-publication",
+    ],
+)
+def test_web_url_patterns(
+    uri: str,
+    handle: str | None,
+    record: dict | None,
+    expected: str | None,
+) -> None:
+    """test URL generation for all supported ATProto apps."""
+    url = get_web_url(uri, handle=handle, record=record)
+    assert url == expected
 
-    def test_post_with_handle(self) -> None:
-        uri = "at://did:plc:abc123/app.bsky.feed.post/xyz789"
-        url = get_web_url(uri, handle="alice.bsky.social")
-        assert url == "https://bsky.app/profile/alice.bsky.social/post/xyz789"
 
-    def test_post_with_did_fallback(self) -> None:
-        uri = "at://did:plc:abc123/app.bsky.feed.post/xyz789"
-        url = get_web_url(uri)  # no handle provided
-        assert url == "https://bsky.app/profile/did:plc:abc123/post/xyz789"
-
-    def test_profile(self) -> None:
-        uri = "at://did:plc:abc123/app.bsky.actor.profile/self"
-        url = get_web_url(uri, handle="bob.bsky.social")
-        assert url == "https://bsky.app/profile/bob.bsky.social"
-
-    def test_list(self) -> None:
-        uri = "at://did:plc:abc123/app.bsky.graph.list/mylist"
-        url = get_web_url(uri, handle="carol.bsky.social")
-        assert url == "https://bsky.app/profile/carol.bsky.social/lists/mylist"
-
-    def test_feed_generator(self) -> None:
-        uri = "at://did:plc:abc123/app.bsky.feed.generator/myfeed"
-        url = get_web_url(uri, handle="dave.bsky.social")
-        assert url == "https://bsky.app/profile/dave.bsky.social/feed/myfeed"
-
-    def test_starterpack(self) -> None:
-        uri = "at://did:plc:abc123/app.bsky.graph.starterpack/pack1"
-        url = get_web_url(uri, handle="eve.bsky.social")
-        assert url == "https://bsky.app/starter-pack/eve.bsky.social/pack1"
+@pytest.mark.parametrize(
+    ("uri", "expected"),
+    [
+        ("at://did:plc:abc/com.example.unknown/r1", None),
+        ("not-a-valid-uri", None),
+        ("", None),
+        (
+            "at://did:plc:abc/app.bsky.actor.profile",
+            "https://bsky.app/profile/did:plc:abc",
+        ),
+    ],
+    ids=["unknown-collection", "malformed-uri", "empty-string", "uri-without-rkey"],
+)
+def test_edge_cases(uri: str, expected: str | None) -> None:
+    """test edge cases and error handling."""
+    assert get_web_url(uri) == expected
 
 
-class TestOtherAtprotoApps:
-    """tests for non-bluesky ATProto apps."""
-
-    def test_frontpage_post(self) -> None:
-        uri = "at://did:plc:abc123/fyi.unravel.frontpage.post/mypost"
-        url = get_web_url(uri)
-        assert url == "https://frontpage.fyi/post/did:plc:abc123/mypost"
-
-    def test_pinksea_oekaki(self) -> None:
-        uri = "at://did:plc:abc123/com.shinolabs.pinksea.oekaki/drawing1"
-        url = get_web_url(uri)
-        assert url == "https://pinksea.art/did:plc:abc123/oekaki/drawing1"
-
-    def test_pinksea_profile(self) -> None:
-        uri = "at://did:plc:abc123/com.shinolabs.pinksea.profile/self"
-        url = get_web_url(uri)
-        assert url == "https://pinksea.art/did:plc:abc123"
-
-    def test_linkat_board(self) -> None:
-        uri = "at://did:plc:abc123/blue.linkat.board/self"
-        url = get_web_url(uri)
-        assert url == "https://linkat.blue/did:plc:abc123"
-
-    def test_tangled_profile(self) -> None:
-        uri = "at://did:plc:abc123/sh.tangled.actor.profile/self"
-        url = get_web_url(uri)
-        assert url == "https://tangled.org/did:plc:abc123"
-
-    def test_tangled_repo_with_record(self) -> None:
-        uri = "at://did:plc:abc123/sh.tangled.repo/somerepo"
-        url = get_web_url(uri, record={"name": "my-cool-repo"})
-        assert url == "https://tangled.org/did:plc:abc123/my-cool-repo"
-
-    def test_tangled_repo_without_record(self) -> None:
-        uri = "at://did:plc:abc123/sh.tangled.repo/somerepo"
-        url = get_web_url(uri)  # no record provided
-        assert url is None  # can't construct URL without record.name
-
-    def test_leaflet_document(self) -> None:
-        uri = "at://did:plc:abc123/pub.leaflet.document/doc1"
-        url = get_web_url(uri)
-        assert url == "https://leaflet.pub/p/did:plc:abc123/doc1"
-
-    def test_leaflet_publication(self) -> None:
-        uri = "at://did:plc:abc123/pub.leaflet.publication/pub1"
-        url = get_web_url(uri)
-        assert url == "https://leaflet.pub/lish/did:plc:abc123/pub1"
-
-
-class TestEdgeCases:
-    """tests for edge cases and unknown collections."""
-
-    def test_unknown_collection_returns_none(self) -> None:
-        uri = "at://did:plc:abc123/com.example.unknown/record1"
-        url = get_web_url(uri)
-        assert url is None
-
-    def test_malformed_uri_returns_none(self) -> None:
-        url = get_web_url("not-a-valid-uri")
-        assert url is None
-
-    def test_uri_without_rkey(self) -> None:
-        # profile collections have rkey but it's not used in URL
-        uri = "at://did:plc:abc123/app.bsky.actor.profile"
-        url = get_web_url(uri)
-        assert url == "https://bsky.app/profile/did:plc:abc123"
-
-    def test_empty_string_returns_none(self) -> None:
-        url = get_web_url("")
-        assert url is None
-
-
-class TestHandleVsDid:
-    """tests verifying handle preference over DID."""
-
-    def test_handle_preferred_when_provided(self) -> None:
-        uri = "at://did:plc:abc123/app.bsky.feed.post/xyz"
-        # when handle is provided, it should be used instead of DID
-        url = get_web_url(uri, handle="myhandle.bsky.social")
-        assert url is not None
-        assert "myhandle.bsky.social" in url
-        assert "did:plc:abc123" not in url
-
-    def test_did_used_when_no_handle(self) -> None:
-        uri = "at://did:plc:abc123/app.bsky.feed.post/xyz"
-        url = get_web_url(uri)  # no handle
-        assert url is not None
-        assert "did:plc:abc123" in url
-
-    def test_empty_handle_falls_back_to_did(self) -> None:
-        uri = "at://did:plc:abc123/app.bsky.feed.post/xyz"
-        url = get_web_url(uri, handle="")  # empty string
-        assert url is not None
-        assert "did:plc:abc123" in url
+@pytest.mark.parametrize(
+    ("handle", "expected_contains", "expected_not_contains"),
+    [
+        ("myhandle.bsky.social", "myhandle.bsky.social", "did:plc:abc"),
+        (None, "did:plc:abc", None),
+        ("", "did:plc:abc", None),
+    ],
+    ids=["handle-preferred", "did-fallback", "empty-handle-fallback"],
+)
+def test_handle_vs_did_preference(
+    handle: str | None,
+    expected_contains: str,
+    expected_not_contains: str | None,
+) -> None:
+    """test that handle is preferred over DID when provided."""
+    uri = "at://did:plc:abc/app.bsky.feed.post/xyz"
+    url = get_web_url(uri, handle=handle)
+    assert url is not None
+    assert expected_contains in url
+    if expected_not_contains:
+        assert expected_not_contains not in url
