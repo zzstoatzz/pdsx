@@ -1,0 +1,32 @@
+---
+title: web_url
+sidebarTitle: web_url
+---
+
+# `pdsx._internal.web_url`
+
+
+web URL generation for ATProto records.
+
+maps collection namespaces to web app URL patterns. the collection namespace
+(e.g., app.bsky) hints at which app ecosystem the record belongs to.
+
+
+## Functions
+
+### `get_web_url` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L19" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+get_web_url(uri: str, handle: str) -> str | None
+```
+
+
+get web URL for a record if a pattern is known.
+
+**Args:**
+- `uri`: AT-URI (at\://did/collection/rkey)
+- `handle`: user's handle for the URL
+
+**Returns:**
+- web URL or None if no pattern is known for this collection
+
