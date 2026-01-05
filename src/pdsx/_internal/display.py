@@ -194,7 +194,13 @@ def display_record(
     console.print(Panel(table, title="[bold]record[/bold]", border_style="dim"))
 
 
-def display_success(operation: str, uri: str, cid: str, collection: str = "") -> None:
+def display_success(
+    operation: str,
+    uri: str,
+    cid: str,
+    collection: str = "",
+    handle: str = "",
+) -> None:
     """display a success message.
 
     Args:
@@ -202,7 +208,10 @@ def display_success(operation: str, uri: str, cid: str, collection: str = "") ->
         uri: record uri
         cid: record cid
         collection: optional collection name
+        handle: optional handle for generating web URL
     """
+    from pdsx._internal.web_url import get_web_url
+
     title = f"[bold]{collection}[/bold]" if collection else ""
     content = f"[green]✓[/green] {operation}"
 
@@ -210,5 +219,12 @@ def display_success(operation: str, uri: str, cid: str, collection: str = "") ->
         content += f"\n\n[dim]uri:[/dim] {uri}"
     if cid:
         content += f"\n[dim]cid:[/dim] {cid}"
+
+    # show web URL if we can generate one
+    # uses handle if provided (more readable), falls back to DID from URI
+    if uri:
+        web_url = get_web_url(uri, handle=handle if handle else None)
+        if web_url:
+            content += f"\n[dim]url:[/dim] {web_url}"
 
     console.print(Panel(content, title=title, border_style="green"))

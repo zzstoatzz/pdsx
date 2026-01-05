@@ -93,10 +93,12 @@ async def cmd_create(
     fail_fast: bool = False,
 ) -> None:
     """create one or more records."""
+    handle = client.me.handle if client.me else ""
+
     # single record - use existing behavior for backward compatibility
     if len(records) == 1:
         response = await create_record(client, collection, records[0])
-        display_success("created", response.uri, response.cid, collection)
+        display_success("created", response.uri, response.cid, collection, handle)
         return
 
     # multiple records - use batch operations

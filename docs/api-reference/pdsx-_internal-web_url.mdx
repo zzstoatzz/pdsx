@@ -1,0 +1,114 @@
+---
+title: web_url
+sidebarTitle: web_url
+---
+
+# `pdsx._internal.web_url`
+
+
+web URL generation for ATProto records.
+
+maps collection namespaces to web app URL patterns. the collection namespace
+(e.g., app.bsky) hints at which app ecosystem the record belongs to.
+
+mappings derived from:
+https://github.com/notjuliet/pdsls/blob/main/src/utils/templates.ts
+
+
+## Functions
+
+### `_bsky_profile` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L20" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_bsky_profile(repo: str, rkey: str, record: dict[str, Any] | None) -> str
+```
+
+### `_bsky_post` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L24" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_bsky_post(repo: str, rkey: str, record: dict[str, Any] | None) -> str
+```
+
+### `_bsky_list` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L28" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_bsky_list(repo: str, rkey: str, record: dict[str, Any] | None) -> str
+```
+
+### `_bsky_feed` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L32" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_bsky_feed(repo: str, rkey: str, record: dict[str, Any] | None) -> str
+```
+
+### `_bsky_starterpack` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L36" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_bsky_starterpack(repo: str, rkey: str, record: dict[str, Any] | None) -> str
+```
+
+### `_frontpage_post` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L40" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_frontpage_post(repo: str, rkey: str, record: dict[str, Any] | None) -> str
+```
+
+### `_pinksea_oekaki` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L44" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_pinksea_oekaki(repo: str, rkey: str, record: dict[str, Any] | None) -> str
+```
+
+### `_pinksea_profile` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L48" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_pinksea_profile(repo: str, rkey: str, record: dict[str, Any] | None) -> str
+```
+
+### `_linkat_board` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L52" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_linkat_board(repo: str, rkey: str, record: dict[str, Any] | None) -> str
+```
+
+### `_tangled_profile` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L56" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_tangled_profile(repo: str, rkey: str, record: dict[str, Any] | None) -> str
+```
+
+### `_tangled_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L60" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_tangled_repo(repo: str, rkey: str, record: dict[str, Any] | None) -> str | None
+```
+
+### `_leaflet_document` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L67" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_leaflet_document(repo: str, rkey: str, record: dict[str, Any] | None) -> str
+```
+
+### `_leaflet_publication` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L71" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_leaflet_publication(repo: str, rkey: str, record: dict[str, Any] | None) -> str
+```
+
+### `get_web_url` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/web_url.py#L100" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+get_web_url(uri: str, handle: str | None = None, record: dict[str, Any] | None = None) -> str | None
+```
+
+
+get web URL for a record if a pattern is known.
+
+**Args:**
+- `uri`: AT-URI (at\://did/collection/rkey)
+- `handle`: optional handle to use instead of DID (more readable)
+- `record`: optional record data (needed for some URL patterns)
+
+**Returns:**
+- web URL or None if no pattern is known for this collection
+
