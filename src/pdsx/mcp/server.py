@@ -24,6 +24,7 @@ from pdsx._internal.resolution import URIParts
 from pdsx.mcp._types import (
     CreateResponse,
     DeleteResponse,
+    IdentityResponse,
     RecordResponse,
     UpdateResponse,
 )
@@ -422,6 +423,25 @@ async def delete_record(uri: str) -> DeleteResponse:
         return DeleteResponse(
             deleted=f"at://{parts.repo}/{parts.collection}/{parts.rkey}"
         )
+
+
+@mcp.tool
+async def whoami() -> IdentityResponse:
+    """get the authenticated user's identity.
+
+    returns the handle and DID of the currently authenticated user.
+    requires authentication via x-atproto-handle and x-atproto-password headers.
+
+    returns:
+        dict with handle and did of authenticated user
+    """
+    async with get_atproto_client(
+        require_auth=True,
+        operation="checking identity",
+    ) as client:
+        if not client.me:
+            raise ValueError("authenticated but no user info available")
+        return IdentityResponse(handle=client.me.handle, did=client.me.did)
 
 
 # -----------------------------------------------------------------------------

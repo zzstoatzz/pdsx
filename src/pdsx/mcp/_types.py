@@ -31,6 +31,13 @@ class DeleteResponse(TypedDict):
     deleted: str
 
 
+class IdentityResponse(TypedDict):
+    """response from whoami/identity check."""
+
+    handle: str
+    did: str
+
+
 class CredentialsContext(TypedDict):
     """credentials extracted from context or headers."""
 
