@@ -33,7 +33,6 @@ from pdsx.mcp.client import (
     get_atproto_client,
     get_repo_from_context,
 )
-from pdsx.mcp.filterable import filterable
 from pdsx.mcp.middleware import AtprotoAuthMiddleware
 
 # response size limits to prevent context flooding in LLM clients
@@ -142,7 +141,6 @@ def _truncate_list_response(
     msg = f"response truncated: showing {shown} of {total_fetched} records"
     if has_more:
         msg += " (more available via cursor)"
-    msg += '. use _filter to select specific fields, e.g. _filter="[*].{uri: uri, text: value.text}"'
 
     return {
         "records": truncated,
@@ -190,15 +188,6 @@ get an app password at: https://bsky.app/settings/app-passwords
 records are identified by AT-URIs:
 - full: `at://did:plc:abc123/app.bsky.feed.post/xyz789`
 - shorthand (when authenticated): `app.bsky.feed.post/xyz789`
-
-## filtering results
-
-list_records and get_record support a `_filter` parameter with jmespath:
-- `[*].uri` - extract just URIs
-- `[*].{uri: uri, text: value.text}` - select specific fields
-- `[?value.text != null]` - filter items
-
-see https://jmespath.org for full syntax.
 """
 
 
@@ -258,7 +247,6 @@ the createdAt field is auto-added if not provided.
 
 
 @mcp.tool
-@filterable
 async def list_records(
     collection: str,
     limit: int = 10,
@@ -309,7 +297,6 @@ async def list_records(
 
 
 @mcp.tool
-@filterable
 async def get_record(
     uri: str,
     repo: str | None = None,

@@ -400,7 +400,6 @@ class TestContextFloodingProtection:
 
         # message should mention pagination
         assert "cursor" in result["message"]
-        assert "_filter" in result["message"]
 
     def test_truncate_response_no_more_available(self):
         """truncation message differs when no more records available."""
