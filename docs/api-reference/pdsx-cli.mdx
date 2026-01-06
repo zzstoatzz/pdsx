@@ -70,7 +70,17 @@ cmd_upload_blob(client: AsyncClient, file_path: str) -> None
 upload a blob (image, video, etc.).
 
 
-### `async_main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L191" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_whoami` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L191" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+cmd_whoami(client: AsyncClient) -> None
+```
+
+
+show authenticated identity.
+
+
+### `async_main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L200" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 async_main() -> int
@@ -80,7 +90,7 @@ async_main() -> int
 main entry point.
 
 
-### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L512" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L529" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 main() -> NoReturn

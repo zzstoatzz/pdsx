@@ -173,6 +173,37 @@ class TestMcpServerImports:
         assert mcp is not None
 
 
+class TestAtprotoAuthMiddleware:
+    """tests for AtprotoAuthMiddleware."""
+
+    def test_middleware_has_on_call_tool(self):
+        """middleware implements on_call_tool hook."""
+        from pdsx.mcp.middleware import AtprotoAuthMiddleware
+
+        middleware = AtprotoAuthMiddleware()
+        # should have custom implementation, not just inherited
+        assert hasattr(middleware, "on_call_tool")
+        # check it's not the base class implementation
+        from fastmcp.server.middleware import Middleware
+
+        assert middleware.on_call_tool.__func__ is not Middleware.on_call_tool
+
+    def test_middleware_has_on_read_resource(self):
+        """middleware implements on_read_resource hook for resource auth.
+
+        regression test: without this, the pdsx://me resource can't access
+        credentials from http headers because middleware only ran for tools.
+        """
+        from pdsx.mcp.middleware import AtprotoAuthMiddleware
+
+        middleware = AtprotoAuthMiddleware()
+        assert hasattr(middleware, "on_read_resource")
+        # check it's not the base class implementation
+        from fastmcp.server.middleware import Middleware
+
+        assert middleware.on_read_resource.__func__ is not Middleware.on_read_resource
+
+
 class TestGetAtprotoClient:
     """tests for get_atproto_client with PDS discovery."""
 
