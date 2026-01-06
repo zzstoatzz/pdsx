@@ -44,14 +44,12 @@ def _lazy_imports():
             AuthenticationRequired,
             get_atproto_client,
         )
-        from pdsx.mcp.filterable import filterable
         from pdsx.mcp.middleware import AtprotoAuthMiddleware
         from pdsx.mcp.server import mcp
 
         return {
             "AtprotoAuthMiddleware": AtprotoAuthMiddleware,
             "AuthenticationRequired": AuthenticationRequired,
-            "filterable": filterable,
             "get_atproto_client": get_atproto_client,
             "mcp": mcp,
         }
@@ -70,7 +68,6 @@ def __getattr__(name: str):
 __all__ = [
     "AtprotoAuthMiddleware",
     "AuthenticationRequired",
-    "filterable",
     "get_atproto_client",
     "main",
     "mcp",
