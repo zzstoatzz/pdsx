@@ -129,35 +129,6 @@ pdsx automatically discovers the correct PDS for any user. when you query record
 
 this means you can read records from users on any PDS - including self-hosted instances - without any configuration.
 
-## filtering responses
-
-all read operations support a `_filter` parameter for jmespath expressions:
-
-```
-# extract just post text
-list_records(
-  collection="app.bsky.feed.post",
-  repo="zzstoatzz.io",
-  _filter="[*].value.text"
-)
-
-# select specific fields
-list_records(
-  collection="app.bsky.feed.post",
-  repo="zzstoatzz.io",
-  _filter="[*].{uri: uri, text: value.text}"
-)
-
-# filter items
-list_records(
-  collection="app.bsky.feed.post",
-  repo="zzstoatzz.io",
-  _filter="[?value.text != null]"
-)
-```
-
-see [jmespath.org](https://jmespath.org) for full syntax.
-
 ## common collections
 
 here are the most commonly used collections:

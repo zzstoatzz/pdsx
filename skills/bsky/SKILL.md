@@ -25,17 +25,19 @@ Threads span multiple users. Pattern:
    get_record(uri="at://did:plc:xxx/app.bsky.feed.post/abc123")
    ```
 
-2. **List the OP's posts** and filter for replies to extract participant DIDs:
+2. **List the OP's posts** to find replies:
    ```python
-   list_records("app.bsky.feed.post", repo="did:plc:xxx", _filter="[?reply].reply.parent.uri")
+   list_records("app.bsky.feed.post", repo="did:plc:xxx")
    ```
+   Look for posts with `reply` fields pointing back to the thread.
 
 3. **Extract DIDs** from the URIs (format: `at://DID/collection/rkey`)
 
 4. **Query each participant's posts** for their contributions to the thread:
    ```python
-   list_records("app.bsky.feed.post", repo="did:plc:other", _filter="[?reply.root.uri=='at://did:plc:xxx/app.bsky.feed.post/abc123']")
+   list_records("app.bsky.feed.post", repo="did:plc:other")
    ```
+   Filter the results locally to find posts where `reply.root.uri` matches the thread root.
 
 ## Collections
 
@@ -80,21 +82,6 @@ create_record("app.bsky.feed.post", {
         "parent": {"uri": "at://...", "cid": "..."}
     }
 })
-```
-
-## Filtering with `_filter`
-
-The `_filter` parameter uses JMESPath:
-
-```python
-# just the text from posts
-list_records(..., _filter="[*].text")
-
-# reply URIs only
-list_records(..., _filter="[?reply].reply.parent.uri")
-
-# posts with specific text
-list_records(..., _filter="[?contains(text, 'keyword')]")
 ```
 
 ## Gotchas
