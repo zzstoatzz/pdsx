@@ -188,6 +188,15 @@ async def cmd_upload_blob(client: AsyncClient, file_path: str) -> None:
     )
 
 
+async def cmd_whoami(client: AsyncClient) -> None:
+    """show authenticated identity."""
+    if not client.me:
+        console.print("[red]error:[/red] not authenticated")
+        return
+
+    console.print(f"[bold]{client.me.handle}[/bold] ({client.me.did})")
+
+
 async def async_main() -> int:
     """main entry point."""
     parser = argparse.ArgumentParser(
@@ -340,6 +349,11 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
         "upload-blob", help="upload a blob (image, video, etc.)"
     )
     upload_blob_parser.add_argument("file_path", help="path to file to upload")
+
+    # whoami (me/identity aliases)
+    subparsers.add_parser(
+        "whoami", aliases=["me", "identity"], help="show authenticated identity"
+    )
 
     args = parser.parse_args()
 
@@ -497,6 +511,9 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
 
         elif args.command == "upload-blob":
             await cmd_upload_blob(client, args.file_path)
+
+        elif args.command in ("whoami", "me", "identity"):
+            await cmd_whoami(client)
 
         return 0
 

@@ -10,6 +10,46 @@ import pytest
 from pdsx._internal.resolution import discover_pds
 
 
+def test_whoami_in_help() -> None:
+    """test whoami command appears in help."""
+    result = subprocess.run(
+        ["pdsx", "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0
+    assert "whoami" in result.stdout
+    assert "me" in result.stdout
+    assert "identity" in result.stdout
+
+
+class TestWhoami:
+    """tests for whoami command."""
+
+    async def test_cmd_whoami_displays_identity(self) -> None:
+        """whoami shows handle and DID when authenticated."""
+        from pdsx.cli import cmd_whoami
+
+        mock_client = MagicMock()
+        mock_client.me = MagicMock()
+        mock_client.me.handle = "test.bsky.social"
+        mock_client.me.did = "did:plc:test123"
+
+        # should not raise
+        await cmd_whoami(mock_client)
+
+    async def test_cmd_whoami_handles_no_auth(self) -> None:
+        """whoami handles unauthenticated client."""
+        from pdsx.cli import cmd_whoami
+
+        mock_client = MagicMock()
+        mock_client.me = None
+
+        # should not raise, just print error
+        await cmd_whoami(mock_client)
+
+
 def test_version_flag_long() -> None:
     """test --version flag displays version."""
     result = subprocess.run(
