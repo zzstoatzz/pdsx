@@ -98,7 +98,24 @@ delete a record.
 - `uri`: record AT-URI (can be shorthand like 'collection/rkey' if authenticated)
 
 
-### `upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L200" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `describe_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L200" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+describe_repo(client: AsyncClient, repo: str) -> models.ComAtprotoRepoDescribeRepo.Response
+```
+
+
+describe a repo, listing its collections.
+
+**Args:**
+- `client`: atproto client (no auth required)
+- `repo`: handle or DID to describe
+
+**Returns:**
+- response with handle, did, didDoc, collections, handleIsCorrect
+
+
+### `upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L216" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 upload_blob(client: AsyncClient, file_path: str | Path) -> models.ComAtprotoRepoUploadBlob.Response

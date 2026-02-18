@@ -194,6 +194,69 @@ def display_record(
     console.print(Panel(table, title="[bold]record[/bold]", border_style="dim"))
 
 
+def display_repo_description(
+    response: models.ComAtprotoRepoDescribeRepo.Response,
+    *,
+    output_format: OutputFormat = OutputFormat.TABLE,
+) -> None:
+    """display a repo description.
+
+    Args:
+        response: describe_repo response
+        output_format: output format enum
+    """
+    handle = response.handle
+    did = response.did
+    handle_ok = response.handle_is_correct
+    collections = response.collections or []
+
+    # json output
+    if output_format == OutputFormat.JSON:
+        output = {
+            "handle": handle,
+            "did": did,
+            "handleIsCorrect": handle_ok,
+            "collections": collections,
+        }
+        print(json.dumps(output, indent=2))
+        return
+
+    # yaml output
+    if output_format == OutputFormat.YAML:
+        output = {
+            "handle": handle,
+            "did": did,
+            "handleIsCorrect": handle_ok,
+            "collections": collections,
+        }
+        print(yaml.dump(output, default_flow_style=False, sort_keys=False))
+        return
+
+    # compact output
+    if output_format == OutputFormat.COMPACT:
+        status = "valid" if handle_ok else "invalid"
+        print(f"{handle} ({did}) handle={status}")
+        for c in collections:
+            print(f"  {c}")
+        return
+
+    # table output (default)
+    table = Table(show_header=False, box=None)
+    table.add_column("key", style="cyan")
+    table.add_column("value", style="white")
+
+    table.add_row("handle", handle)
+    table.add_row("did", did)
+    table.add_row(
+        "handle valid", "[green]yes[/green]" if handle_ok else "[red]no[/red]"
+    )
+
+    collections_str = "\n".join(collections) if collections else "[dim]none[/dim]"
+    table.add_row("collections", collections_str)
+
+    console.print(Panel(table, title="[bold]repo[/bold]", border_style="dim"))
+
+
 def display_success(
     operation: str,
     uri: str,

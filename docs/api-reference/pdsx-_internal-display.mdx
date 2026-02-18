@@ -49,7 +49,21 @@ display a single record.
 - `output_format`: output format enum (default\: table with panel)
 
 
-### `display_success` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/display.py#L197" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `display_repo_description` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/display.py#L197" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+display_repo_description(response: models.ComAtprotoRepoDescribeRepo.Response) -> None
+```
+
+
+display a repo description.
+
+**Args:**
+- `response`: describe_repo response
+- `output_format`: output format enum
+
+
+### `display_success` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/display.py#L260" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 display_success(operation: str, uri: str, cid: str, collection: str = '', handle: str = '') -> None

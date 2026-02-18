@@ -197,6 +197,22 @@ async def delete_record(
     )
 
 
+async def describe_repo(
+    client: AsyncClient,
+    repo: str,
+) -> models.ComAtprotoRepoDescribeRepo.Response:
+    """describe a repo, listing its collections.
+
+    Args:
+        client: atproto client (no auth required)
+        repo: handle or DID to describe
+
+    Returns:
+        response with handle, did, didDoc, collections, handleIsCorrect
+    """
+    return await client.com.atproto.repo.describe_repo({"repo": repo})
+
+
 async def upload_blob(
     client: AsyncClient,
     file_path: str | Path,

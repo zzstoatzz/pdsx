@@ -29,11 +29,13 @@ from pdsx._internal.display import (  # noqa: E402
     console,
     display_record,
     display_records,
+    display_repo_description,
     display_success,
 )
 from pdsx._internal.operations import (  # noqa: E402
     create_record,
     delete_record,
+    describe_repo,
     get_record,
     list_records,
     update_record,
@@ -70,6 +72,17 @@ async def cmd_list(
             print(f"\nnext page cursor: {response.cursor}", file=sys.stderr)
         else:
             console.print(f"\n[dim]next page cursor:[/dim] {response.cursor}")
+
+
+async def cmd_describe(
+    client: AsyncClient,
+    repo: str,
+    output_format: OutputFormat | None = None,
+) -> None:
+    """describe a repo, listing its collections."""
+    response = await describe_repo(client, repo)
+    fmt = output_format or OutputFormat.TABLE
+    display_repo_description(response, output_format=fmt)
 
 
 async def cmd_get(
@@ -203,6 +216,9 @@ async def async_main() -> int:
         description="atproto record operations",
         epilog="""
 examples:
+  # list collections in a repo
+  pdsx -r zzstoatzz.io ls
+
   # read posts (no auth needed, -r is required)
   pdsx -r zzstoatzz.io ls app.bsky.feed.post
 
@@ -253,7 +269,10 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
     # list (ls alias)
     list_parser = subparsers.add_parser("list", aliases=["ls"], help="list records")
     list_parser.add_argument(
-        "collection", help="collection name (e.g., app.bsky.feed.post)"
+        "collection",
+        nargs="?",
+        default=None,
+        help="collection name (e.g., app.bsky.feed.post). omit to list collections in the repo",
     )
     list_parser.add_argument("--limit", type=int, default=50, help="max records")
     list_parser.add_argument(
@@ -418,14 +437,17 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
 
         if args.command in ("list", "ls"):
             output_fmt = OutputFormat(args.output) if args.output else None
-            await cmd_list(
-                client,
-                args.collection,
-                args.limit,
-                args.repo,
-                args.cursor,
-                output_format=output_fmt,
-            )
+            if args.collection is None:
+                await cmd_describe(client, args.repo, output_format=output_fmt)
+            else:
+                await cmd_list(
+                    client,
+                    args.collection,
+                    args.limit,
+                    args.repo,
+                    args.cursor,
+                    output_format=output_fmt,
+                )
 
         elif args.command in ("get", "cat"):
             output_fmt = (

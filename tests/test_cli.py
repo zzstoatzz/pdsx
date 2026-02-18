@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -22,6 +23,55 @@ def test_whoami_in_help() -> None:
     assert "whoami" in result.stdout
     assert "me" in result.stdout
     assert "identity" in result.stdout
+
+
+class TestDescribe:
+    """tests for describe (ls without collection) command."""
+
+    async def test_cmd_describe_displays_repo(self) -> None:
+        """cmd_describe shows repo info when collection omitted."""
+        from pdsx.cli import cmd_describe
+
+        mock_client = MagicMock()
+
+        mock_response = MagicMock()
+        mock_response.handle = "test.bsky.social"
+        mock_response.did = "did:plc:test123"
+        mock_response.handle_is_correct = True
+        mock_response.collections = [
+            "app.bsky.feed.post",
+            "app.bsky.actor.profile",
+        ]
+
+        with patch(
+            "pdsx.cli.describe_repo", new_callable=AsyncMock, return_value=mock_response
+        ):
+            await cmd_describe(mock_client, "test.bsky.social")
+
+    async def test_cmd_describe_json_output(self, capsys) -> None:
+        """cmd_describe outputs json when requested."""
+        from pdsx._internal.output import OutputFormat
+        from pdsx.cli import cmd_describe
+
+        mock_client = MagicMock()
+
+        mock_response = MagicMock()
+        mock_response.handle = "test.bsky.social"
+        mock_response.did = "did:plc:test123"
+        mock_response.handle_is_correct = True
+        mock_response.collections = ["app.bsky.feed.post"]
+
+        with patch(
+            "pdsx.cli.describe_repo", new_callable=AsyncMock, return_value=mock_response
+        ):
+            await cmd_describe(
+                mock_client, "test.bsky.social", output_format=OutputFormat.JSON
+            )
+
+        captured = capsys.readouterr()
+        output = json.loads(captured.out)
+        assert output["handle"] == "test.bsky.social"
+        assert output["collections"] == ["app.bsky.feed.post"]
 
 
 class TestWhoami:

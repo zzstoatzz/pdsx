@@ -7,6 +7,7 @@ from pdsx.mcp._types import (
     CredentialsContext,
     DeleteResponse,
     RecordResponse,
+    RepoDescriptionResponse,
     UpdateResponse,
 )
 from pdsx.mcp.client import AUTH_HELP, AuthenticationRequired
@@ -58,6 +59,19 @@ class TestTypedDicts:
         """DeleteResponse can be constructed."""
         r = DeleteResponse(deleted="at://...")
         assert r["deleted"] == "at://..."
+
+    def test_repo_description_response(self):
+        """RepoDescriptionResponse can be constructed."""
+        r = RepoDescriptionResponse(
+            handle="test.bsky.social",
+            did="did:plc:test123",
+            collections=["app.bsky.feed.post", "app.bsky.actor.profile"],
+            handleIsCorrect=True,
+        )
+        assert r["handle"] == "test.bsky.social"
+        assert r["did"] == "did:plc:test123"
+        assert r["collections"] == ["app.bsky.feed.post", "app.bsky.actor.profile"]
+        assert r["handleIsCorrect"] is True
 
     def test_credentials_context(self):
         """CredentialsContext can be constructed."""
