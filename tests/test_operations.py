@@ -9,6 +9,7 @@ from atproto import AsyncClient, models
 
 from pdsx._internal.operations import (
     delete_record,
+    describe_repo,
     get_record,
     list_records,
     update_record,
@@ -270,3 +271,53 @@ class TestListRecords:
         assert call_args["collection"] == "app.bsky.feed.post"
         assert call_args["limit"] == 50
         assert call_args["cursor"] == "previous_cursor"
+
+
+class TestDescribeRepo:
+    """tests for describe_repo function."""
+
+    async def test_describe_repo(self, mock_client: AsyncClient) -> None:
+        """test describing a repo returns collections."""
+        mock_response = models.ComAtprotoRepoDescribeRepo.Response(
+            handle="test.bsky.social",
+            did="did:plc:test123",
+            did_doc={},
+            collections=["app.bsky.feed.post", "app.bsky.actor.profile"],
+            handle_is_correct=True,
+        )
+        mock_client.com.atproto.repo.describe_repo = AsyncMock(  # type: ignore[attr-defined]
+            return_value=mock_response
+        )
+
+        result = await describe_repo(mock_client, "test.bsky.social")
+
+        assert result.handle == "test.bsky.social"
+        assert result.did == "did:plc:test123"
+        assert result.collections == [
+            "app.bsky.feed.post",
+            "app.bsky.actor.profile",
+        ]
+        assert result.handle_is_correct is True
+        mock_client.com.atproto.repo.describe_repo.assert_called_once_with(
+            {"repo": "test.bsky.social"}
+        )
+
+    async def test_describe_repo_no_auth_needed(
+        self, mock_client_no_auth: AsyncClient
+    ) -> None:
+        """test describe_repo works without authentication."""
+        mock_response = models.ComAtprotoRepoDescribeRepo.Response(
+            handle="other.bsky.social",
+            did="did:plc:other456",
+            did_doc={},
+            collections=["app.bsky.feed.post"],
+            handle_is_correct=True,
+        )
+        mock_client_no_auth.com.atproto.repo.describe_repo = AsyncMock(  # type: ignore[attr-defined]
+            return_value=mock_response
+        )
+
+        result = await describe_repo(mock_client_no_auth, "other.bsky.social")
+
+        assert result.handle == "other.bsky.social"
+        assert result.collections == ["app.bsky.feed.post"]

@@ -12,6 +12,9 @@ from pdsx._internal.operations import (
     delete_record as _delete_record,
 )
 from pdsx._internal.operations import (
+    describe_repo as _describe_repo,
+)
+from pdsx._internal.operations import (
     get_record as _get_record,
 )
 from pdsx._internal.operations import (
@@ -26,6 +29,7 @@ from pdsx.mcp._types import (
     DeleteResponse,
     IdentityResponse,
     RecordResponse,
+    RepoDescriptionResponse,
     UpdateResponse,
 )
 from pdsx.mcp.client import (
@@ -293,6 +297,37 @@ async def list_records(
             records,
             total_fetched=len(records),
             has_more=response.cursor is not None,
+        )
+
+
+@mcp.tool
+async def describe_repo(
+    repo: str,
+) -> RepoDescriptionResponse:
+    """describe a repo and list its collections.
+
+    use this to discover what collections exist in a repo before listing records.
+
+    examples:
+    - describe_repo("zzstoatzz.io") - see what collections a user has
+    - describe_repo("did:plc:...") - describe by DID
+
+    args:
+        repo: handle or DID to describe
+
+    returns:
+        dict with handle, did, collections, and handleIsCorrect
+    """
+    async with get_atproto_client(
+        require_auth=False,
+        target_repo=repo,
+    ) as client:
+        response = await _describe_repo(client, repo)
+        return RepoDescriptionResponse(
+            handle=response.handle,
+            did=response.did,
+            collections=response.collections or [],
+            handleIsCorrect=response.handle_is_correct,
         )
 
 

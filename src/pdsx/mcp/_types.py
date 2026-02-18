@@ -38,6 +38,15 @@ class IdentityResponse(TypedDict):
     did: str
 
 
+class RepoDescriptionResponse(TypedDict):
+    """response from describing a repo."""
+
+    handle: str
+    did: str
+    collections: list[str]
+    handleIsCorrect: bool
+
+
 class CredentialsContext(TypedDict):
     """credentials extracted from context or headers."""
 
