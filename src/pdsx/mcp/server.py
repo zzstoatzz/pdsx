@@ -379,12 +379,15 @@ async def get_record(
 async def create_record(
     collection: str,
     record: dict[str, Any],
+    rkey: str | None = None,
 ) -> CreateResponse:
     """create a new record. requires authentication.
 
     args:
         collection: the collection to create in (e.g., 'app.bsky.feed.post')
         record: the record data. $type and createdAt are auto-added if missing.
+        rkey: optional record key (e.g., 'self' for profile records, or any fixed key
+              required by the lexicon). auto-generated if not provided.
 
     returns:
         dict with uri and cid of created record
@@ -393,7 +396,7 @@ async def create_record(
         require_auth=True,
         operation="creating a record",
     ) as client:
-        response = await _create_record(client, collection, record)
+        response = await _create_record(client, collection, record, rkey=rkey)
         return CreateResponse(uri=response.uri, cid=response.cid)
 
 

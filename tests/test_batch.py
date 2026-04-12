@@ -256,7 +256,7 @@ class TestBatchCreate:
         ]
 
         async def mock_create(
-            client: AsyncClient, collection: str, record: dict
+            client: AsyncClient, collection: str, record: dict, **kwargs
         ) -> MagicMock:
             """mock create that fails on second record."""
             if record["text"] == "post 2":
@@ -307,12 +307,31 @@ class TestReadRecordsFromStdin:
             patch("sys.stdin", io.StringIO(test_input)),
             patch("sys.stdin.isatty", return_value=False),
         ):
-            records = read_records_from_stdin()
+            results = read_records_from_stdin()
 
-        assert len(records) == 3
-        assert records[0] == {"text": "post 1"}
-        assert records[1] == {"text": "post 2"}
-        assert records[2] == {"text": "post 3"}
+        assert len(results) == 3
+        assert results[0] == ({"text": "post 1"}, None)
+        assert results[1] == ({"text": "post 2"}, None)
+        assert results[2] == ({"text": "post 3"}, None)
+
+    def test_read_jsonl_with_rkey(self) -> None:
+        """test reading JSONL records with rkey field."""
+        import io
+
+        test_input = '{"rkey":"self","displayName":"Test"}\n{"text":"no rkey"}\n'
+
+        with (
+            patch("sys.stdin", io.StringIO(test_input)),
+            patch("sys.stdin.isatty", return_value=False),
+        ):
+            results = read_records_from_stdin()
+
+        assert len(results) == 2
+        record, rkey = results[0]
+        assert rkey == "self"
+        assert "rkey" not in record  # rkey is popped from the record
+        assert record == {"displayName": "Test"}
+        assert results[1] == ({"text": "no rkey"}, None)
 
     def test_read_jsonl_with_empty_lines(self) -> None:
         """test reading JSONL with empty lines."""
@@ -324,10 +343,10 @@ class TestReadRecordsFromStdin:
             patch("sys.stdin", io.StringIO(test_input)),
             patch("sys.stdin.isatty", return_value=False),
         ):
-            records = read_records_from_stdin()
+            results = read_records_from_stdin()
 
-        assert len(records) == 3
-        assert records[0] == {"text": "post 1"}
+        assert len(results) == 3
+        assert results[0] == ({"text": "post 1"}, None)
 
     def test_invalid_json_raises_error(self) -> None:
         """test invalid JSON raises ValueError."""

@@ -101,6 +101,7 @@ async def create_record(
     client: AsyncClient,
     collection: str,
     record: dict[str, RecordValue],
+    rkey: str | None = None,
 ) -> models.ComAtprotoRepoCreateRecord.Response:
     """create a new record.
 
@@ -108,6 +109,7 @@ async def create_record(
         client: authenticated atproto client
         collection: collection name
         record: record data
+        rkey: optional record key (e.g. 'self' for profile records)
 
     Returns:
         created record response
@@ -123,13 +125,16 @@ async def create_record(
     if "createdAt" not in record:
         record["createdAt"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
-    return await client.com.atproto.repo.create_record(
-        {
-            "repo": client.me.did,
-            "collection": collection,
-            "record": record,
-        }
-    )
+    params: dict[str, str | dict[str, RecordValue]] = {
+        "repo": client.me.did,
+        "collection": collection,
+        "record": record,
+    }
+
+    if rkey is not None:
+        params["rkey"] = rkey
+
+    return await client.com.atproto.repo.create_record(params)
 
 
 async def update_record(

@@ -102,6 +102,7 @@ async def cmd_create(
     collection: str,
     records: list[dict[str, RecordValue]],
     *,
+    rkey: str | None = None,
     concurrency: int = 10,
     fail_fast: bool = False,
 ) -> None:
@@ -110,7 +111,7 @@ async def cmd_create(
 
     # single record - use existing behavior for backward compatibility
     if len(records) == 1:
-        response = await create_record(client, collection, records[0])
+        response = await create_record(client, collection, records[0], rkey=rkey)
         display_success("created", response.uri, response.cid, collection, handle)
         return
 
@@ -313,6 +314,10 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
         help="max concurrent operations for batch create (default: 10)",
     )
     create_parser.add_argument(
+        "--rkey",
+        help="record key (e.g., 'self' for profile records)",
+    )
+    create_parser.add_argument(
         "--fail-fast",
         action="store_true",
         help="stop on first error (default: continue on error)",
@@ -461,13 +466,26 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
                 # single record from command line args
                 record = parse_key_value_args(args.fields)
                 records = [record]
+                rkeys: list[str | None] | None = None
+                rkey = args.rkey
             else:
                 # batch records from stdin (JSONL format)
+                # each record may have its own rkey
                 try:
-                    records = read_records_from_stdin()
+                    parsed = read_records_from_stdin()
                 except ValueError as e:
                     console.print(f"[red]error:[/red] {e}")
                     return 1
+
+                if not parsed:
+                    console.print(
+                        "[red]error:[/red] no records provided (use key=value arguments or pipe JSONL to stdin)"
+                    )
+                    return 1
+
+                records = [r for r, _ in parsed]
+                rkeys = [rk for _, rk in parsed]
+                rkey = args.rkey  # CLI --rkey overrides per-record rkeys for single
 
             if not records:
                 console.print(
@@ -475,13 +493,28 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
                 )
                 return 1
 
-            await cmd_create(
-                client,
-                args.collection,
-                records,
-                concurrency=args.concurrency,
-                fail_fast=args.fail_fast,
-            )
+            if len(records) == 1:
+                await cmd_create(
+                    client,
+                    args.collection,
+                    records,
+                    rkey=rkey or (rkeys[0] if rkeys else None),
+                    concurrency=args.concurrency,
+                    fail_fast=args.fail_fast,
+                )
+            else:
+                # batch: use per-record rkeys from JSONL
+                show_progress = sys.stdout.isatty()
+                result = await batch_create(
+                    client,
+                    args.collection,
+                    records,
+                    rkeys=rkeys,
+                    concurrency=args.concurrency,
+                    fail_fast=args.fail_fast,
+                    show_progress=show_progress,
+                )
+                display_batch_result(result, "created")
 
         elif args.command in ("update", "edit"):
             # support batch update from stdin (JSONL) or single update from args

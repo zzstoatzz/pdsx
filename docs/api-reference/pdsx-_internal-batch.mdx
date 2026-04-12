@@ -43,6 +43,7 @@ create multiple records concurrently.
 - `client`: authenticated atproto client
 - `collection`: collection name
 - `records`: list of record data dictionaries
+- `rkeys`: optional list of rkeys (one per record, None for auto-generated)
 - `concurrency`: maximum concurrent operations (default\: 10)
 - `fail_fast`: stop on first error (default\: False)
 - `show_progress`: show progress bar (default\: True)
@@ -51,7 +52,7 @@ create multiple records concurrently.
 - batch result with successful URIs and failed operations
 
 
-### `batch_update` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L176" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `batch_update` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L187" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 batch_update(client: AsyncClient, updates: list[tuple[str, dict[str, RecordValue]]]) -> BatchResult
@@ -71,7 +72,7 @@ update multiple records concurrently.
 - batch result with successful URIs and failed operations
 
 
-### `read_uris_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L241" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `read_uris_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L252" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 read_uris_from_stdin() -> list[str]
@@ -84,23 +85,25 @@ read URIs from stdin, one per line.
 - list of URIs read from stdin
 
 
-### `read_records_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L253" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `read_records_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L264" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
-read_records_from_stdin() -> list[dict[str, RecordValue]]
+read_records_from_stdin() -> list[tuple[dict[str, RecordValue], str | None]]
 ```
 
 
 read JSONL records from stdin, one JSON object per line.
 
+if a record contains an 'rkey' field, it is extracted and returned separately.
+
 **Returns:**
-- list of record dictionaries parsed from JSONL
+- list of (record_dict, rkey_or_none) tuples parsed from JSONL
 
 **Raises:**
 - `ValueError`: if JSON parsing fails
 
 
-### `read_updates_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L285" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `read_updates_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L301" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 read_updates_from_stdin() -> list[tuple[str, dict[str, RecordValue]]]
@@ -118,7 +121,7 @@ each line should be a JSON object with a 'uri' field and update fields.
 - `ValueError`: if JSON parsing fails or uri field is missing
 
 
-### `display_batch_result` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L330" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `display_batch_result` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L346" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 display_batch_result(result: BatchResult, operation: str = 'deleted') -> None

@@ -108,6 +108,7 @@ async def batch_create(
     collection: str,
     records: list[dict[str, RecordValue]],
     *,
+    rkeys: list[str | None] | None = None,
     concurrency: int = 10,
     fail_fast: bool = False,
     show_progress: bool = True,
@@ -118,6 +119,7 @@ async def batch_create(
         client: authenticated atproto client
         collection: collection name
         records: list of record data dictionaries
+        rkeys: optional list of rkeys (one per record, None for auto-generated)
         concurrency: maximum concurrent operations (default: 10)
         fail_fast: stop on first error (default: False)
         show_progress: show progress bar (default: True)
@@ -144,11 +146,13 @@ async def batch_create(
         progress.start()
         task_id = progress.add_task("creating records", total=len(records))
 
-    async def create_one(record: dict[str, RecordValue], index: int) -> None:
+    async def create_one(
+        record: dict[str, RecordValue], index: int, rkey: str | None = None
+    ) -> None:
         """create a single record with concurrency control."""
         async with semaphore:
             try:
-                response = await create_record(client, collection, record)
+                response = await create_record(client, collection, record, rkey=rkey)
                 successful.append(response.uri)
             except Exception as e:
                 # use index as identifier since we don't have URI yet
@@ -159,9 +163,16 @@ async def batch_create(
                 if progress and task_id is not None:
                     progress.update(task_id, advance=1)
 
+    resolved_rkeys = rkeys or [None] * len(records)
+
     try:
         await asyncio.gather(
-            *[create_one(record, i) for i, record in enumerate(records)]
+            *[
+                create_one(record, i, rkey)
+                for i, (record, rkey) in enumerate(
+                    zip(records, resolved_rkeys, strict=False)
+                )
+            ]
         )
     except Exception:
         # fail_fast raised an exception
@@ -250,11 +261,13 @@ def read_uris_from_stdin() -> list[str]:
     return [line.strip() for line in sys.stdin if line.strip()]
 
 
-def read_records_from_stdin() -> list[dict[str, RecordValue]]:
+def read_records_from_stdin() -> list[tuple[dict[str, RecordValue], str | None]]:
     """read JSONL records from stdin, one JSON object per line.
 
+    if a record contains an 'rkey' field, it is extracted and returned separately.
+
     Returns:
-        list of record dictionaries parsed from JSONL
+        list of (record_dict, rkey_or_none) tuples parsed from JSONL
 
     Raises:
         ValueError: if JSON parsing fails
@@ -264,7 +277,7 @@ def read_records_from_stdin() -> list[dict[str, RecordValue]]:
     if sys.stdin.isatty():
         return []
 
-    records = []
+    results: list[tuple[dict[str, RecordValue], str | None]] = []
     for line_num, line in enumerate(sys.stdin, start=1):
         line = line.strip()
         if not line:
@@ -275,11 +288,14 @@ def read_records_from_stdin() -> list[dict[str, RecordValue]]:
                 raise ValueError(
                     f"line {line_num}: expected JSON object, got {type(record).__name__}"
                 )
-            records.append(record)
+            rkey = record.pop("rkey", None)
+            if rkey is not None and not isinstance(rkey, str):
+                raise ValueError(f"line {line_num}: 'rkey' must be a string")
+            results.append((record, rkey))
         except json.JSONDecodeError as e:
             raise ValueError(f"line {line_num}: invalid JSON - {e}") from e
 
-    return records
+    return results
 
 
 def read_updates_from_stdin() -> list[tuple[str, dict[str, RecordValue]]]:
