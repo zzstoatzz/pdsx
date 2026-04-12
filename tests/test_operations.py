@@ -8,6 +8,7 @@ import pytest
 from atproto import AsyncClient, models
 
 from pdsx._internal.operations import (
+    create_record,
     delete_record,
     describe_repo,
     get_record,
@@ -271,6 +272,88 @@ class TestListRecords:
         assert call_args["collection"] == "app.bsky.feed.post"
         assert call_args["limit"] == 50
         assert call_args["cursor"] == "previous_cursor"
+
+
+class TestCreateRecord:
+    """tests for create_record function."""
+
+    async def test_basic_create(self, mock_client: AsyncClient) -> None:
+        """test basic record creation."""
+        mock_client.com.atproto.repo.create_record = AsyncMock(  # type: ignore[attr-defined]
+            return_value=models.ComAtprotoRepoCreateRecord.Response(
+                uri="at://did:plc:test123/app.bsky.feed.post/abc123",
+                cid="testcid",
+            )
+        )
+
+        result = await create_record(
+            mock_client,
+            "app.bsky.feed.post",
+            {"text": "hello"},
+        )
+
+        assert result.uri == "at://did:plc:test123/app.bsky.feed.post/abc123"
+        mock_client.com.atproto.repo.create_record.assert_called_once()
+        call_args = mock_client.com.atproto.repo.create_record.call_args[0][0]
+        assert call_args["repo"] == "did:plc:test123"
+        assert call_args["collection"] == "app.bsky.feed.post"
+        assert call_args["record"]["text"] == "hello"
+        assert call_args["record"]["$type"] == "app.bsky.feed.post"
+        assert "createdAt" in call_args["record"]
+        assert "rkey" not in call_args
+
+    async def test_create_with_rkey(self, mock_client: AsyncClient) -> None:
+        """test record creation with explicit rkey."""
+        mock_client.com.atproto.repo.create_record = AsyncMock(  # type: ignore[attr-defined]
+            return_value=models.ComAtprotoRepoCreateRecord.Response(
+                uri="at://did:plc:test123/app.bsky.actor.profile/self",
+                cid="testcid",
+            )
+        )
+
+        result = await create_record(
+            mock_client,
+            "app.bsky.actor.profile",
+            {"displayName": "Test"},
+            rkey="self",
+        )
+
+        assert result.uri == "at://did:plc:test123/app.bsky.actor.profile/self"
+        call_args = mock_client.com.atproto.repo.create_record.call_args[0][0]
+        assert call_args["rkey"] == "self"
+
+    async def test_create_without_auth_fails(
+        self, mock_client_no_auth: AsyncClient
+    ) -> None:
+        """test create fails without authentication."""
+        with pytest.raises(ValueError, match="not authenticated"):
+            await create_record(
+                mock_client_no_auth,
+                "app.bsky.feed.post",
+                {"text": "hello"},
+            )
+
+    async def test_create_preserves_existing_type_and_created_at(
+        self, mock_client: AsyncClient
+    ) -> None:
+        """test that existing $type and createdAt are not overwritten."""
+        mock_client.com.atproto.repo.create_record = AsyncMock(  # type: ignore[attr-defined]
+            return_value=models.ComAtprotoRepoCreateRecord.Response(
+                uri="at://did:plc:test123/app.bsky.feed.post/abc123",
+                cid="testcid",
+            )
+        )
+
+        record = {
+            "text": "hello",
+            "$type": "custom.type",
+            "createdAt": "2025-01-01T00:00:00Z",
+        }
+        await create_record(mock_client, "app.bsky.feed.post", record)
+
+        call_args = mock_client.com.atproto.repo.create_record.call_args[0][0]
+        assert call_args["record"]["$type"] == "custom.type"
+        assert call_args["record"]["createdAt"] == "2025-01-01T00:00:00Z"
 
 
 class TestDescribeRepo:

@@ -51,7 +51,7 @@ get a specific record.
 ### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L100" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
-create_record(client: AsyncClient, collection: str, record: dict[str, RecordValue]) -> models.ComAtprotoRepoCreateRecord.Response
+create_record(client: AsyncClient, collection: str, record: dict[str, RecordValue], rkey: str | None = None) -> models.ComAtprotoRepoCreateRecord.Response
 ```
 
 
@@ -61,12 +61,13 @@ create a new record.
 - `client`: authenticated atproto client
 - `collection`: collection name
 - `record`: record data
+- `rkey`: optional record key (e.g. 'self' for profile records)
 
 **Returns:**
 - created record response
 
 
-### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L135" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L140" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 update_record(client: AsyncClient, uri: str, updates: dict[str, RecordValue]) -> models.ComAtprotoRepoPutRecord.Response
@@ -84,7 +85,7 @@ update an existing record.
 - updated record response
 
 
-### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L179" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L184" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 delete_record(client: AsyncClient, uri: str) -> None
@@ -98,7 +99,7 @@ delete a record.
 - `uri`: record AT-URI (can be shorthand like 'collection/rkey' if authenticated)
 
 
-### `describe_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L200" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `describe_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L205" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 describe_repo(client: AsyncClient, repo: str) -> models.ComAtprotoRepoDescribeRepo.Response
@@ -115,7 +116,7 @@ describe a repo, listing its collections.
 - response with handle, did, didDoc, collections, handleIsCorrect
 
 
-### `upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L216" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L221" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 upload_blob(client: AsyncClient, file_path: str | Path) -> models.ComAtprotoRepoUploadBlob.Response
