@@ -9,7 +9,7 @@
       "name": "pdsx",
       "description": "ATProto record operations - generic MCP server for reading/writing records, with skills for specific apps",
       "source": "./",
-      "skills": ["./skills/bsky", "./skills/cli"]
+      "skills": ["./skills/bsky", "./skills/cli", "./skills/smoke-test"]
     }
   ]
 }

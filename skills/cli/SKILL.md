@@ -48,6 +48,9 @@ uvx pdsx -r zzstoatzz.io get app.bsky.actor.profile/self
 # create a post
 uvx pdsx --handle you.bsky.social --password $APP_PASSWORD create app.bsky.feed.post text='hello from pdsx'
 
+# create with a fixed rkey (e.g. profile, singleton records)
+uvx pdsx --handle you.bsky.social --password $APP_PASSWORD create app.bsky.actor.profile --rkey self displayName='nate'
+
 # check who you're authenticated as
 uvx pdsx --handle you.bsky.social --password $APP_PASSWORD whoami
 
@@ -63,6 +66,9 @@ Pipe JSONL to stdin for batch operations:
 # batch create
 echo '{"text":"post 1"}
 {"text":"post 2"}' | uvx pdsx --handle ... create app.bsky.feed.post
+
+# batch create with per-record rkeys (rkey field is extracted from each line)
+echo '{"rkey":"self","displayName":"nate"}' | uvx pdsx --handle ... create app.bsky.actor.profile
 
 # batch delete
 echo 'at://did:plc:xxx/app.bsky.feed.post/abc123

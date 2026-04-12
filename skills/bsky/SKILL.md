@@ -15,6 +15,7 @@ Use the pdsx MCP tools (`list_records`, `get_record`, `create_record`, etc.) for
 | list someone's posts | `list_records` | `list_records("app.bsky.feed.post", repo="handle.bsky.social")` |
 | get a profile | `get_record` | `get_record(uri="app.bsky.actor.profile/self", repo="handle.bsky.social")` |
 | create a post | `create_record` | `create_record("app.bsky.feed.post", {"text": "hello"})` |
+| create with fixed rkey | `create_record` | `create_record("app.bsky.actor.profile", {"displayName": "me"}, rkey="self")` |
 
 ## Following Threads
 
