@@ -2,9 +2,47 @@
 
 from __future__ import annotations
 
+import ipaddress
+import socket
 from dataclasses import dataclass
+from urllib.parse import urlparse
 
 from atproto_identity.resolver import AsyncIdResolver
+
+
+def normalize_service_url(host: str) -> str:
+    """coerce a bare host into an https base URL.
+
+    'pds.zat.dev' -> 'https://pds.zat.dev'; an explicit scheme is left as-is.
+    """
+    if host.startswith(("http://", "https://")):
+        return host
+    return f"https://{host}"
+
+
+def reject_private_host(base_url: str) -> None:
+    """raise ValueError if base_url targets a non-public address.
+
+    Best-effort SSRF guard for read queries against arbitrary hosts: resolves
+    the host and refuses loopback, private, link-local, or otherwise non-global
+    addresses (e.g. cloud metadata at 169.254.169.254). This does not defend
+    against DNS rebinding, so callers must not follow redirects.
+    """
+    host = urlparse(base_url).hostname
+    if not host:
+        raise ValueError(f"could not parse host from url: {base_url!r}")
+
+    try:
+        infos = socket.getaddrinfo(host, None, type=socket.SOCK_STREAM)
+    except socket.gaierror as e:
+        raise ValueError(f"could not resolve host {host!r}: {e}") from e
+
+    for *_, sockaddr in infos:
+        ip = ipaddress.ip_address(sockaddr[0])
+        if not ip.is_global:
+            raise ValueError(
+                f"refusing to query non-public host {host!r} (resolves to {ip})"
+            )
 
 
 @dataclass

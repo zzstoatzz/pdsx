@@ -10,7 +10,34 @@ PDS and URI resolution utilities.
 
 ## Functions
 
-### `discover_pds` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L49" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `normalize_service_url` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L13" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+normalize_service_url(host: str) -> str
+```
+
+
+coerce a bare host into an https base URL.
+
+'pds.zat.dev' -> 'https://pds.zat.dev'; an explicit scheme is left as-is.
+
+
+### `reject_private_host` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L23" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+reject_private_host(base_url: str) -> None
+```
+
+
+raise ValueError if base_url targets a non-public address.
+
+Best-effort SSRF guard for read queries against arbitrary hosts: resolves
+the host and refuses loopback, private, link-local, or otherwise non-global
+addresses (e.g. cloud metadata at 169.254.169.254). This does not defend
+against DNS rebinding, so callers must not follow redirects.
+
+
+### `discover_pds` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L87" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 discover_pds(repo: str) -> str
@@ -31,7 +58,7 @@ discover PDS URL from handle or DID.
 
 ## Classes
 
-### `URIParts` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L11" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `URIParts` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L49" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 
 parsed components of an AT-URI.
@@ -39,7 +66,7 @@ parsed components of an AT-URI.
 
 **Methods:**
 
-#### `from_uri` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L19" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+#### `from_uri` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L57" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 from_uri(cls, uri: str, client_did: str | None = None) -> URIParts
