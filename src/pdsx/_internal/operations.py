@@ -5,7 +5,9 @@ from __future__ import annotations
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+import httpx
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -15,8 +17,56 @@ else:
 if TYPE_CHECKING:
     from atproto import AsyncClient, models
 
-from pdsx._internal.resolution import URIParts
+from pdsx._internal.resolution import URIParts, reject_private_host
 from pdsx._internal.types import RecordValue
+
+
+def _normalize_query_params(params: dict[str, Any]) -> dict[str, Any]:
+    """coerce values into XRPC-friendly query params.
+
+    XRPC expects lowercase booleans ('true'/'false'); httpx would otherwise
+    render Python bools as 'True'/'False'.
+    """
+    normalized: dict[str, Any] = {}
+    for key, value in params.items():
+        normalized[key] = (
+            ("true" if value else "false") if isinstance(value, bool) else value
+        )
+    return normalized
+
+
+async def query(
+    nsid: str,
+    base_url: str,
+    params: dict[str, Any] | None = None,
+    timeout: float = 10.0,
+) -> dict[str, Any]:
+    """issue a read-only XRPC *query* (HTTP GET) against base_url.
+
+    GET-only and unauthenticated by construction: it sends no credentials and
+    only ever issues a GET, so it can never invoke a procedure (writes are
+    POST) or act with anyone's identity. Redirects are not followed, so the
+    SSRF host check cannot be bypassed by a redirect to a private address.
+
+    Args:
+        nsid: query method NSID, e.g. 'com.atproto.sync.listRepos'
+        base_url: service base URL, e.g. 'https://pds.zat.dev'
+        params: query parameters (booleans normalized to 'true'/'false')
+        timeout: request timeout in seconds
+
+    Returns:
+        the method's JSON response; non-object responses are wrapped as
+        {'result': <value>}
+    """
+    reject_private_host(base_url)
+
+    url = f"{base_url.rstrip('/')}/xrpc/{nsid}"
+    async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
+        response = await client.get(url, params=_normalize_query_params(params or {}))
+        response.raise_for_status()
+        data = response.json()
+
+    return data if isinstance(data, dict) else {"result": data}
 
 
 async def list_records(

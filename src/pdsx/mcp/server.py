@@ -21,9 +21,16 @@ from pdsx._internal.operations import (
     list_records as _list_records,
 )
 from pdsx._internal.operations import (
+    query as _query,
+)
+from pdsx._internal.operations import (
     update_record as _update_record,
 )
-from pdsx._internal.resolution import URIParts
+from pdsx._internal.resolution import (
+    URIParts,
+    discover_pds,
+    normalize_service_url,
+)
 from pdsx.mcp._types import (
     CreateResponse,
     DeleteResponse,
@@ -42,6 +49,9 @@ from pdsx.mcp.middleware import AtprotoAuthMiddleware
 # response size limits to prevent context flooding in LLM clients
 MAX_LIMIT = 25  # max records per request (can paginate for more)
 MAX_RESPONSE_CHARS = 30000  # truncate responses larger than this
+
+# default target for app.bsky.* read queries that aren't tied to a single PDS
+PUBLIC_APPVIEW = "https://public.api.bsky.app"
 
 mcp = FastMCP("pdsx")
 
@@ -155,6 +165,44 @@ def _truncate_list_response(
     }
 
 
+def _truncate_query_response(result: dict[str, Any]) -> dict[str, Any]:
+    """trim an oversized query response so it doesn't flood the client context.
+
+    trims the largest list-valued field (e.g. listRepos' 'repos') until the
+    serialized response fits, and annotates what was dropped.
+    """
+    try:
+        if len(json.dumps(result, default=str)) <= MAX_RESPONSE_CHARS:
+            return result
+    except (TypeError, ValueError):
+        return result
+
+    list_keys = [k for k, v in result.items() if isinstance(v, list)]
+    if not list_keys:
+        return {
+            "truncated": True,
+            "message": f"response exceeded {MAX_RESPONSE_CHARS} chars",
+        }
+
+    key = max(list_keys, key=lambda k: len(result[k]))
+    original_len = len(result[key])
+    items = list(result[key])
+    trimmed = dict(result)
+    while (
+        items
+        and len(json.dumps({**trimmed, key: items}, default=str)) > MAX_RESPONSE_CHARS
+    ):
+        items = items[:-1]
+
+    trimmed[key] = items
+    trimmed["truncated"] = True
+    trimmed["message"] = (
+        f"trimmed '{key}' to {len(items)} of {original_len} items "
+        f"(response exceeded {MAX_RESPONSE_CHARS} chars; paginate with cursor)"
+    )
+    return trimmed
+
+
 # -----------------------------------------------------------------------------
 # prompts
 # -----------------------------------------------------------------------------
@@ -172,6 +220,18 @@ pdsx provides tools for atproto record operations (bluesky, etc).
 
 - **read operations**: no auth needed, just pass `repo` parameter
 - **write operations** (create, update, delete): require auth
+
+## read-only queries (sync, identity, server, app.bsky getters)
+
+for read methods that aren't record CRUD, use `query` — GET-only and
+unauthenticated, so it can never write or act as you:
+
+- `query("com.atproto.sync.listRepos", host="pds.zat.dev")` — who's on a PDS
+- `query("com.atproto.identity.resolveHandle", params={"handle": "alice.bsky.social"})`
+- `query("app.bsky.actor.getProfile", params={"actor": "alice.bsky.social"})`
+
+target a specific user's PDS with `repo=`, a specific host with `host=`, or
+neither (defaults to the public appview for `app.bsky.*` getters).
 
 to authenticate for writes, set these headers when configuring the MCP server:
 - `x-atproto-handle`: your atproto handle (e.g., 'you.bsky.social')
@@ -373,6 +433,56 @@ async def get_record(
         return RecordResponse(
             uri=response.uri, cid=response.cid, value=_clean_value(response.value)
         )
+
+
+@mcp.tool
+async def query(
+    nsid: str,
+    params: dict[str, Any] | None = None,
+    host: str | None = None,
+    repo: str | None = None,
+) -> dict[str, Any]:
+    """call a read-only XRPC *query* method (HTTP GET).
+
+    this is the read counterpart the record tools don't cover — sync, identity,
+    server, and app.bsky.*.get* methods. it is GET-only and unauthenticated: it
+    cannot create, update, delete, post, or act as you. use create/update/delete
+    for writes (those require auth).
+
+    examples:
+    - query("com.atproto.sync.listRepos", host="pds.zat.dev")
+        -> who is hosted on a PDS
+    - query("com.atproto.identity.resolveHandle", params={"handle": "bufo.uk"})
+        -> resolve a handle to a DID
+    - query("app.bsky.actor.getProfile", params={"actor": "phi.zzstoatzz.io"})
+        -> a user's public profile
+
+    targeting (choose at most one):
+        repo: a handle or DID — routes to that user's PDS (for sync.*/repo.* host queries)
+        host: an explicit service base URL or bare host, e.g. "pds.zat.dev"
+        neither: defaults to the public appview, for app.bsky.* getters
+
+    args:
+        nsid: the query method, e.g. "com.atproto.sync.listRepos"
+        params: query parameters for the method
+        host: service to target (bare host gets https://)
+        repo: handle or DID whose PDS to target
+
+    returns:
+        the method's JSON response (large list fields are trimmed; paginate with cursor)
+    """
+    if repo and host:
+        raise ValueError("pass either 'repo' or 'host', not both")
+
+    if repo:
+        base_url = await discover_pds(repo)
+    elif host:
+        base_url = normalize_service_url(host)
+    else:
+        base_url = PUBLIC_APPVIEW
+
+    result = await _query(nsid, base_url, params)
+    return _truncate_query_response(result)
 
 
 @mcp.tool

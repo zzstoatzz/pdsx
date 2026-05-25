@@ -10,7 +10,45 @@ atproto record operations.
 
 ## Functions
 
-### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L22" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `_normalize_query_params` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L24" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_normalize_query_params(params: dict[str, Any]) -> dict[str, Any]
+```
+
+
+coerce values into XRPC-friendly query params.
+
+XRPC expects lowercase booleans ('true'/'false'); httpx would otherwise
+render Python bools as 'True'/'False'.
+
+
+### `query` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L38" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+query(nsid: str, base_url: str, params: dict[str, Any] | None = None, timeout: float = 10.0) -> dict[str, Any]
+```
+
+
+issue a read-only XRPC *query* (HTTP GET) against base_url.
+
+GET-only and unauthenticated by construction: it sends no credentials and
+only ever issues a GET, so it can never invoke a procedure (writes are
+POST) or act with anyone's identity. Redirects are not followed, so the
+SSRF host check cannot be bypassed by a redirect to a private address.
+
+**Args:**
+- `nsid`: query method NSID, e.g. 'com.atproto.sync.listRepos'
+- `base_url`: service base URL, e.g. 'https\://pds.zat.dev'
+- `params`: query parameters (booleans normalized to 'true'/'false')
+- `timeout`: request timeout in seconds
+
+**Returns:**
+- the method's JSON response; non-object responses are wrapped as
+- {'result': &lt;value&gt;}
+
+
+### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L72" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 list_records(client: AsyncClient, collection: str, limit: int, repo: str | None = None, cursor: str | None = None) -> models.ComAtprotoRepoListRecords.Response
@@ -30,7 +68,7 @@ list records in a collection.
 - response with records and optional cursor for next page
 
 
-### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L57" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L107" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 get_record(client: AsyncClient, uri: str, repo: str | None = None) -> models.ComAtprotoRepoGetRecord.Response
@@ -48,7 +86,7 @@ get a specific record.
 - record response
 
 
-### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L100" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L150" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 create_record(client: AsyncClient, collection: str, record: dict[str, RecordValue], rkey: str | None = None) -> models.ComAtprotoRepoCreateRecord.Response
@@ -67,7 +105,7 @@ create a new record.
 - created record response
 
 
-### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L140" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L190" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 update_record(client: AsyncClient, uri: str, updates: dict[str, RecordValue]) -> models.ComAtprotoRepoPutRecord.Response
@@ -85,7 +123,7 @@ update an existing record.
 - updated record response
 
 
-### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L184" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L234" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 delete_record(client: AsyncClient, uri: str) -> None
@@ -99,7 +137,7 @@ delete a record.
 - `uri`: record AT-URI (can be shorthand like 'collection/rkey' if authenticated)
 
 
-### `describe_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L205" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `describe_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L255" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 describe_repo(client: AsyncClient, repo: str) -> models.ComAtprotoRepoDescribeRepo.Response
@@ -116,7 +154,7 @@ describe a repo, listing its collections.
 - response with handle, did, didDoc, collections, handleIsCorrect
 
 
-### `upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L221" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L271" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 upload_blob(client: AsyncClient, file_path: str | Path) -> models.ComAtprotoRepoUploadBlob.Response
