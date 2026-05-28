@@ -43,6 +43,7 @@ from pdsx.mcp.client import (
     AuthenticationRequired,
     get_atproto_client,
     get_repo_from_context,
+    resolve_pds_url,
 )
 from pdsx.mcp.middleware import AtprotoAuthMiddleware
 
@@ -441,32 +442,45 @@ async def query(
     params: dict[str, Any] | None = None,
     host: str | None = None,
     repo: str | None = None,
+    authenticated: bool = False,
 ) -> dict[str, Any]:
     """call a read-only XRPC *query* method (HTTP GET).
 
     this is the read counterpart the record tools don't cover — sync, identity,
-    server, and app.bsky.*.get* methods. it is GET-only and unauthenticated: it
-    cannot create, update, delete, post, or act as you. use create/update/delete
-    for writes (those require auth).
+    server, and the app.bsky.* getter family. it is GET-only and structurally
+    cannot create, update, delete, post, or act as a procedure. by default it
+    is unauthenticated; pass ``authenticated=True`` for endpoints that require
+    a session (e.g., notifications, private feeds, auth-required graph getters).
 
-    examples:
+    examples (unauth):
     - query("com.atproto.sync.listRepos", host="pds.zat.dev")
         -> who is hosted on a PDS
     - query("com.atproto.identity.resolveHandle", params={"handle": "bufo.uk"})
         -> resolve a handle to a DID
     - query("app.bsky.actor.getProfile", params={"actor": "phi.zzstoatzz.io"})
         -> a user's public profile
+    - query("app.bsky.feed.getQuotes", params={"uri": "at://.../post/xyz"})
+        -> who quoted a post (no auth required)
+
+    examples (auth):
+    - query("app.bsky.notification.listNotifications",
+            params={"limit": 30}, authenticated=True)
+        -> your own notifications
 
     targeting (choose at most one):
         repo: a handle or DID — routes to that user's PDS (for sync.*/repo.* host queries)
         host: an explicit service base URL or bare host, e.g. "pds.zat.dev"
-        neither: defaults to the public appview, for app.bsky.* getters
+        neither: defaults to the public appview (unauth) or your PDS (auth);
+            your PDS proxies authenticated app.bsky.* calls to the AppView.
 
     args:
         nsid: the query method, e.g. "com.atproto.sync.listRepos"
         params: query parameters for the method
         host: service to target (bare host gets https://)
         repo: handle or DID whose PDS to target
+        authenticated: send the caller's session token (Bearer JWT). still
+            GET-only / SSRF-guarded / no-redirects — only the authority axis
+            changes.
 
     returns:
         the method's JSON response (large list fields are trimmed; paginate with cursor)
@@ -474,14 +488,38 @@ async def query(
     if repo and host:
         raise ValueError("pass either 'repo' or 'host', not both")
 
+    auth_token: str | None = None
+
+    if authenticated:
+        # resolve the caller's session and extract the access JWT; the JWT is
+        # an opaque string we then send as Bearer on the GET. the context
+        # manager just yields the client — exiting it does not invalidate the
+        # JWT, so it's safe to use after.
+        async with get_atproto_client(
+            require_auth=True,
+            operation="an authenticated query",
+        ) as client:
+            session = client.me
+            access_jwt = (
+                getattr(session, "access_jwt", None) if session is not None else None
+            )
+            if not access_jwt:
+                raise AuthenticationRequired("an authenticated query")
+            auth_token = access_jwt
+
     if repo:
         base_url = await discover_pds(repo)
     elif host:
         base_url = normalize_service_url(host)
+    elif authenticated:
+        # default to the caller's PDS — it proxies authenticated app.bsky.*
+        # calls to the AppView, so this works for notifications, private
+        # feeds, etc., without the caller needing to know AppView routing.
+        base_url = resolve_pds_url()
     else:
         base_url = PUBLIC_APPVIEW
 
-    result = await _query(nsid, base_url, params)
+    result = await _query(nsid, base_url, params, auth_token=auth_token)
     return _truncate_query_response(result)
 
 

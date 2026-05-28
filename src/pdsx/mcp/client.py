@@ -169,3 +169,21 @@ def get_repo_from_context() -> str | None:
     if not repo:
         repo = os.environ.get("ATPROTO_REPO")
     return repo
+
+
+def resolve_pds_url() -> str:
+    """resolve the caller's PDS URL with the same fallback chain
+    ``get_atproto_client`` uses: ``x-atproto-pds-url`` header, then
+    ``ATPROTO_PDS_URL`` env, then ``https://bsky.social``.
+
+    Used by authenticated XRPC queries that need a default service endpoint
+    when neither ``host`` nor ``repo`` is specified — the caller's PDS is
+    the right default because it proxies authenticated ``app.bsky.*`` calls
+    to the AppView.
+    """
+    creds = _get_credentials_from_context()
+    return (
+        creds.get("pds_url")
+        or os.environ.get("ATPROTO_PDS_URL")
+        or "https://bsky.social"
+    )

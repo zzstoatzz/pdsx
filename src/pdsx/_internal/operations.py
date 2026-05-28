@@ -40,19 +40,27 @@ async def query(
     base_url: str,
     params: dict[str, Any] | None = None,
     timeout: float = 10.0,
+    auth_token: str | None = None,
 ) -> dict[str, Any]:
     """issue a read-only XRPC *query* (HTTP GET) against base_url.
 
-    GET-only and unauthenticated by construction: it sends no credentials and
-    only ever issues a GET, so it can never invoke a procedure (writes are
-    POST) or act with anyone's identity. Redirects are not followed, so the
-    SSRF host check cannot be bypassed by a redirect to a private address.
+    GET-only by construction: only ever issues a GET, so it can never invoke
+    a procedure (writes are POST). Redirects are not followed, so the SSRF
+    host check cannot be bypassed by a redirect to a private address. When
+    ``auth_token`` is supplied, sends it as ``Authorization: Bearer <token>``;
+    otherwise unauthenticated.
+
+    The mutation invariant (GET-only / SSRF-guarded / no redirects) carries
+    through both the unauth and auth paths — extending to authenticated reads
+    adds the authority axis without weakening the mutation axis.
 
     Args:
         nsid: query method NSID, e.g. 'com.atproto.sync.listRepos'
         base_url: service base URL, e.g. 'https://pds.zat.dev'
         params: query parameters (booleans normalized to 'true'/'false')
         timeout: request timeout in seconds
+        auth_token: optional bearer token for endpoints that require auth
+            (e.g., ``app.bsky.notification.listNotifications``)
 
     Returns:
         the method's JSON response; non-object responses are wrapped as
@@ -60,9 +68,14 @@ async def query(
     """
     reject_private_host(base_url)
 
+    headers = {"Authorization": f"Bearer {auth_token}"} if auth_token else None
     url = f"{base_url.rstrip('/')}/xrpc/{nsid}"
     async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
-        response = await client.get(url, params=_normalize_query_params(params or {}))
+        response = await client.get(
+            url,
+            params=_normalize_query_params(params or {}),
+            headers=headers,
+        )
         response.raise_for_status()
         data = response.json()
 

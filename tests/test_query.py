@@ -115,8 +115,8 @@ class _RecordingClient:
     async def __aexit__(self, *exc):
         return False
 
-    async def get(self, url, params=None):
-        self.calls.append(("GET", url, params))
+    async def get(self, url, params=None, headers=None):
+        self.calls.append(("GET", url, params, headers))
         return self.response
 
     async def post(self, *args, **kwargs):  # pragma: no cover - must never run
@@ -141,7 +141,7 @@ async def test_query_is_get_only_and_enumerates_repos(recording_client):
     client = recording_client.instances[-1]
     # GET-only: exactly one GET to the xrpc path, never a POST
     assert client.calls == [
-        ("GET", "https://pds.zat.dev/xrpc/com.atproto.sync.listRepos", {}),
+        ("GET", "https://pds.zat.dev/xrpc/com.atproto.sync.listRepos", {}, None),
     ]
     # redirects disabled so the SSRF guard can't be bypassed by a redirect
     assert client.kwargs.get("follow_redirects") is False
@@ -158,8 +158,27 @@ async def test_query_normalizes_bool_params(recording_client):
         "https://x.test",
         params={"reverse": True, "limit": 5},
     )
-    _, _, sent = recording_client.instances[-1].calls[0]
+    _, _, sent, _ = recording_client.instances[-1].calls[0]
     assert sent == {"reverse": "true", "limit": 5}
+
+
+async def test_query_default_sends_no_authorization_header(recording_client):
+    await query("app.bsky.feed.getAuthorFeed", "https://x.test")
+    _, _, _, headers = recording_client.instances[-1].calls[0]
+    # unauth path stays unauth — no Authorization slipped through
+    assert headers is None
+
+
+async def test_query_with_auth_token_sets_bearer_header(recording_client):
+    await query(
+        "app.bsky.notification.listNotifications",
+        "https://bsky.social",
+        params={"limit": 30},
+        auth_token="jwt-abc",
+    )
+    _, url, _, headers = recording_client.instances[-1].calls[0]
+    assert url == "https://bsky.social/xrpc/app.bsky.notification.listNotifications"
+    assert headers == {"Authorization": "Bearer jwt-abc"}
 
 
 # -----------------------------------------------------------------------------
@@ -175,7 +194,7 @@ async def test_query_tool_rejects_repo_and_host():
 async def test_query_tool_selects_base_url(monkeypatch):
     captured: list = []
 
-    async def fake_query(nsid, base_url, params=None):
+    async def fake_query(nsid, base_url, params=None, auth_token=None):
         captured.append(base_url)
         return {"ok": True}
 
@@ -193,4 +212,46 @@ async def test_query_tool_selects_base_url(monkeypatch):
         "https://pds.zat.dev",
         server.PUBLIC_APPVIEW,
         "https://pds.example",
+    ]
+
+
+async def test_query_tool_authenticated_uses_caller_pds_and_jwt(monkeypatch):
+    """when authenticated=True with no host/repo, route to caller's PDS and
+    attach the session JWT as Bearer — the PDS proxies app.bsky.* auth calls
+    to the AppView."""
+    from contextlib import asynccontextmanager
+
+    captured: list = []
+
+    async def fake_query(nsid, base_url, params=None, auth_token=None):
+        captured.append({"nsid": nsid, "base_url": base_url, "auth_token": auth_token})
+        return {"notifications": []}
+
+    class _FakeSession:
+        access_jwt = "jwt-from-session"
+
+    class _FakeClient:
+        me = _FakeSession()
+
+    @asynccontextmanager
+    async def fake_get_client(require_auth=False, operation="", target_repo=None):
+        assert require_auth is True
+        yield _FakeClient()
+
+    monkeypatch.setattr(server, "_query", fake_query)
+    monkeypatch.setattr(server, "get_atproto_client", fake_get_client)
+    monkeypatch.setattr(server, "resolve_pds_url", lambda: "https://my-pds.example")
+
+    await server.query.fn(
+        nsid="app.bsky.notification.listNotifications",
+        params={"limit": 30},
+        authenticated=True,
+    )
+
+    assert captured == [
+        {
+            "nsid": "app.bsky.notification.listNotifications",
+            "base_url": "https://my-pds.example",
+            "auth_token": "jwt-from-session",
+        }
     ]
