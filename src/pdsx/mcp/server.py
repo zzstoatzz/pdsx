@@ -54,6 +54,19 @@ MAX_RESPONSE_CHARS = 30000  # truncate responses larger than this
 # default target for app.bsky.* read queries that aren't tied to a single PDS
 PUBLIC_APPVIEW = "https://public.api.bsky.app"
 
+# explicit allowlist for `query(..., authenticated=True)`. authenticated reads
+# can expose private data (DMs via `chat.bsky.convo.*`, prefs, etc.), so the
+# authority axis is opt-in *and* allowlisted — safe by default. extending the
+# allowlist is intentional: a new entry here is a deliberate decision that
+# this NSID's response is acceptable for an agentic caller to read with the
+# operator's session. start narrow; add only on demonstrated need.
+AUTHENTICATED_QUERY_ALLOWLIST: frozenset[str] = frozenset(
+    {
+        "app.bsky.notification.listNotifications",
+        "app.bsky.notification.getUnreadCount",
+    }
+)
+
 mcp = FastMCP("pdsx")
 
 mcp.add_middleware(AtprotoAuthMiddleware())
@@ -480,7 +493,9 @@ async def query(
         repo: handle or DID whose PDS to target
         authenticated: send the caller's session token (Bearer JWT). still
             GET-only / SSRF-guarded / no-redirects — only the authority axis
-            changes.
+            changes, and only NSIDs in ``AUTHENTICATED_QUERY_ALLOWLIST`` are
+            permitted (currently notifications). extending the allowlist is
+            a deliberate, per-NSID decision: file an issue to add one.
 
     returns:
         the method's JSON response (large list fields are trimmed; paginate with cursor)
@@ -491,6 +506,18 @@ async def query(
     auth_token: str | None = None
 
     if authenticated:
+        # gate at the authority boundary: authenticated reads can expose
+        # private account data, so the NSID must be on the explicit allowlist.
+        # the unauth path stays open to any NSID (public data anyway).
+        if nsid not in AUTHENTICATED_QUERY_ALLOWLIST:
+            raise ValueError(
+                f"{nsid!r} is not on the authenticated-query allowlist. "
+                f"allowed: {sorted(AUTHENTICATED_QUERY_ALLOWLIST)}. file an "
+                "issue at https://github.com/zzstoatzz/pdsx if you need it "
+                "added — extending the allowlist is a deliberate decision "
+                "that the response is acceptable for an agentic caller to "
+                "read with the operator's session."
+            )
         # resolve the caller's session and extract the access JWT; the JWT is
         # an opaque string we then send as Bearer on the GET. the context
         # manager just yields the client — exiting it does not invalidate the

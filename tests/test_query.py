@@ -215,6 +215,43 @@ async def test_query_tool_selects_base_url(monkeypatch):
     ]
 
 
+async def test_authenticated_query_rejects_non_allowlisted_nsid():
+    """authenticated=True with an NSID not on the allowlist refuses cleanly,
+    without making any network call or touching credentials. closes the
+    private-data exfiltration surface (e.g., chat.bsky.convo.*) that an
+    untrusted prompt could otherwise reach."""
+    with pytest.raises(ValueError, match="allowlist"):
+        await server.query.fn(
+            nsid="chat.bsky.convo.listConvos",
+            authenticated=True,
+        )
+
+
+async def test_authenticated_query_allowlist_contains_notifications():
+    """sanity-check the initial allowlist covers the motivating use case."""
+    assert (
+        "app.bsky.notification.listNotifications"
+        in server.AUTHENTICATED_QUERY_ALLOWLIST
+    )
+
+
+async def test_unauthenticated_query_accepts_any_nsid_monkeypatched(monkeypatch):
+    """the allowlist gate must not affect the unauth path — public reads
+    of any NSID are still fine."""
+    captured: list = []
+
+    async def fake_query(nsid, base_url, params=None, auth_token=None):
+        captured.append((nsid, auth_token))
+        return {"ok": True}
+
+    monkeypatch.setattr(server, "_query", fake_query)
+    # an NSID nowhere near the allowlist — fine because authenticated=False
+    await server.query.fn(
+        nsid="chat.bsky.convo.listConvos", host="x.test", authenticated=False
+    )
+    assert captured == [("chat.bsky.convo.listConvos", None)]
+
+
 async def test_query_tool_authenticated_uses_caller_pds_and_jwt(monkeypatch):
     """when authenticated=True with no host/repo, route to caller's PDS and
     attach the session JWT as Bearer — the PDS proxies app.bsky.* auth calls
