@@ -9,6 +9,8 @@ from fastmcp.server.dependencies import get_http_headers
 from fastmcp.server.middleware import CallNext, Middleware, MiddlewareContext
 from mcp.server.lowlevel.helper_types import ReadResourceContents
 
+from pdsx.mcp.client import _maybe_await
+
 logger = logging.getLogger(__name__)
 
 
@@ -48,22 +50,23 @@ class AtprotoAuthMiddleware(Middleware):
         pds_url = headers.get("x-atproto-pds-url")
         repo = headers.get("x-atproto-repo")
 
-        # fastmcp 3.x made set_state a coroutine; await it (see #85)
+        # set_state is sync in fastmcp 2.x, a coroutine in 3.x (see #85);
+        # _maybe_await handles either so this works across runtimes
         if handle:
             logger.debug("extracted atproto handle from http headers")
-            await fastmcp_ctx.set_state("atproto_handle", handle)
+            await _maybe_await(fastmcp_ctx.set_state("atproto_handle", handle))
 
         if password:
             logger.debug("extracted atproto password from http headers")
-            await fastmcp_ctx.set_state("atproto_password", password)
+            await _maybe_await(fastmcp_ctx.set_state("atproto_password", password))
 
         if pds_url:
             logger.debug("extracted atproto pds url from http headers")
-            await fastmcp_ctx.set_state("atproto_pds_url", pds_url)
+            await _maybe_await(fastmcp_ctx.set_state("atproto_pds_url", pds_url))
 
         if repo:
             logger.debug("extracted atproto repo from http headers")
-            await fastmcp_ctx.set_state("atproto_repo", repo)
+            await _maybe_await(fastmcp_ctx.set_state("atproto_repo", repo))
 
     async def on_call_tool(
         self,

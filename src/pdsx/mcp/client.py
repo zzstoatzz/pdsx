@@ -1,15 +1,30 @@
 """helper for creating atproto clients with per-request credentials."""
 
+import inspect
 import logging
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from atproto import AsyncClient
 
 from pdsx.mcp._types import CredentialsContext
 
 logger = logging.getLogger(__name__)
+
+
+async def _maybe_await(value: Any) -> Any:
+    """await ``value`` if it's awaitable, else return it as-is.
+
+    fastmcp's ``Context.get_state`` / ``set_state`` are sync in 2.x and
+    coroutines in 3.x (see #85). hosted runtimes (e.g. FastMCP Cloud) may pin
+    a different fastmcp than our dependency, so we can't assume either — detect
+    at call time instead of relying on the installed version.
+    """
+    if inspect.isawaitable(value):
+        return await value
+    return value
 
 
 async def _get_credentials_from_context() -> CredentialsContext:
@@ -29,11 +44,10 @@ async def _get_credentials_from_context() -> CredentialsContext:
         from fastmcp.server.dependencies import get_context
 
         ctx = get_context()
-        # fastmcp 3.x made get_state a coroutine; await it (see #85)
-        result["handle"] = await ctx.get_state("atproto_handle")
-        result["password"] = await ctx.get_state("atproto_password")
-        result["pds_url"] = await ctx.get_state("atproto_pds_url")
-        result["repo"] = await ctx.get_state("atproto_repo")
+        result["handle"] = await _maybe_await(ctx.get_state("atproto_handle"))
+        result["password"] = await _maybe_await(ctx.get_state("atproto_password"))
+        result["pds_url"] = await _maybe_await(ctx.get_state("atproto_pds_url"))
+        result["repo"] = await _maybe_await(ctx.get_state("atproto_repo"))
     except RuntimeError as e:
         if "No active context found" not in str(e):
             raise

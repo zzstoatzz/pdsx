@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 from pdsx.mcp._types import (
     CreateResponse,
     CredentialsContext,
@@ -370,20 +372,45 @@ class _FakeAsyncContext:
         self._state[key] = value
 
 
-class TestAsyncStateRegression:
-    """regression tests for #85: fastmcp 3.x made Context.get_state / set_state
-    coroutines. pdsx must await them, otherwise un-awaited coroutines leak in as
-    credentials and every tool fails with
-    `'coroutine' object has no attribute 'startswith'/'endswith'`.
+class _FakeSyncContext:
+    """fastmcp 2.x-style context whose get_state/set_state are plain sync.
+
+    also matches hosted runtimes (e.g. FastMCP Cloud) that may serve a fastmcp
+    different from our pinned dependency — the reason the fix must not assume
+    either calling convention (see #85).
     """
 
-    async def test_get_credentials_awaits_get_state(self, monkeypatch):
-        """credentials resolve to plain strings, not un-awaited coroutines."""
+    def __init__(self, state: dict | None = None):
+        self._state: dict = dict(state or {})
+
+    def get_state(self, key: str):
+        return self._state.get(key)
+
+    def set_state(self, key: str, value, *, serializable: bool = True) -> None:
+        self._state[key] = value
+
+
+# both context styles must work: 3.x (async) and 2.x / hosted (sync)
+_CONTEXT_KINDS = [_FakeAsyncContext, _FakeSyncContext]
+
+
+class TestAsyncStateRegression:
+    """regression tests for #85: fastmcp made Context.get_state / set_state
+    coroutines in 3.x but they're plain sync in 2.x, and hosted runtimes may
+    pin either. pdsx must handle both — otherwise credentials come back as
+    un-awaited coroutines (`'coroutine' object has no attribute 'startswith'`)
+    or `await` blows up on a plain return value (`object NoneType can't be used
+    in 'await' expression`).
+    """
+
+    @pytest.mark.parametrize("ctx_cls", _CONTEXT_KINDS)
+    async def test_get_credentials_resolves_strings(self, monkeypatch, ctx_cls):
+        """credentials resolve to plain strings under sync OR async get_state."""
         import fastmcp.server.dependencies as deps
 
         from pdsx.mcp.client import _get_credentials_from_context
 
-        ctx = _FakeAsyncContext(
+        ctx = ctx_cls(
             {
                 "atproto_handle": "alice.bsky.social",
                 "atproto_password": "app-pw",
@@ -403,35 +430,39 @@ class TestAsyncStateRegression:
         for value in creds.values():
             assert isinstance(value, str)
 
-    async def test_get_repo_from_context_awaits(self, monkeypatch):
+    @pytest.mark.parametrize("ctx_cls", _CONTEXT_KINDS)
+    async def test_get_repo_from_context(self, monkeypatch, ctx_cls):
         """get_repo_from_context returns the resolved repo string."""
         import fastmcp.server.dependencies as deps
 
         from pdsx.mcp.client import get_repo_from_context
 
-        ctx = _FakeAsyncContext({"atproto_repo": "alice.bsky.social"})
+        ctx = ctx_cls({"atproto_repo": "alice.bsky.social"})
         monkeypatch.setattr(deps, "get_context", lambda: ctx)
 
         assert await get_repo_from_context() == "alice.bsky.social"
 
-    async def test_resolve_pds_url_awaits(self, monkeypatch):
+    @pytest.mark.parametrize("ctx_cls", _CONTEXT_KINDS)
+    async def test_resolve_pds_url(self, monkeypatch, ctx_cls):
         """resolve_pds_url returns the header pds_url, not a coroutine."""
         import fastmcp.server.dependencies as deps
 
         from pdsx.mcp.client import resolve_pds_url
 
-        ctx = _FakeAsyncContext({"atproto_pds_url": "https://pds.example"})
+        ctx = ctx_cls({"atproto_pds_url": "https://pds.example"})
         monkeypatch.setattr(deps, "get_context", lambda: ctx)
 
         assert await resolve_pds_url() == "https://pds.example"
 
-    async def test_middleware_awaits_set_state(self, monkeypatch):
-        """middleware writes header credentials into context state (awaiting set_state)."""
+    @pytest.mark.parametrize("ctx_cls", _CONTEXT_KINDS)
+    async def test_middleware_writes_state(self, monkeypatch, ctx_cls):
+        """middleware writes header credentials into context state under both
+        sync and async set_state."""
         import fastmcp.server.dependencies as deps
 
         from pdsx.mcp import middleware as mw
 
-        ctx = _FakeAsyncContext()
+        ctx = ctx_cls()
         monkeypatch.setattr(deps, "get_context", lambda: ctx)
         monkeypatch.setattr(
             mw,
@@ -445,7 +476,8 @@ class TestAsyncStateRegression:
 
         await mw.AtprotoAuthMiddleware()._extract_credentials()
 
-        # if set_state weren't awaited, state would stay empty (coroutine discarded)
+        # if set_state weren't handled, async state would stay empty (coroutine
+        # discarded) and the await would raise under sync state
         assert ctx._state["atproto_handle"] == "alice.bsky.social"
         assert ctx._state["atproto_password"] == "app-pw"
         assert ctx._state["atproto_repo"] == "alice.bsky.social"
