@@ -29,7 +29,7 @@ class AtprotoAuthMiddleware(Middleware):
     accessed using `get_atproto_client()` from the client module.
     """
 
-    def _extract_credentials(self) -> None:
+    async def _extract_credentials(self) -> None:
         """extract credentials from http headers into fastmcp context."""
         from fastmcp.server.dependencies import get_context
 
@@ -48,21 +48,22 @@ class AtprotoAuthMiddleware(Middleware):
         pds_url = headers.get("x-atproto-pds-url")
         repo = headers.get("x-atproto-repo")
 
+        # fastmcp 3.x made set_state a coroutine; await it (see #85)
         if handle:
             logger.debug("extracted atproto handle from http headers")
-            fastmcp_ctx.set_state("atproto_handle", handle)
+            await fastmcp_ctx.set_state("atproto_handle", handle)
 
         if password:
             logger.debug("extracted atproto password from http headers")
-            fastmcp_ctx.set_state("atproto_password", password)
+            await fastmcp_ctx.set_state("atproto_password", password)
 
         if pds_url:
             logger.debug("extracted atproto pds url from http headers")
-            fastmcp_ctx.set_state("atproto_pds_url", pds_url)
+            await fastmcp_ctx.set_state("atproto_pds_url", pds_url)
 
         if repo:
             logger.debug("extracted atproto repo from http headers")
-            fastmcp_ctx.set_state("atproto_repo", repo)
+            await fastmcp_ctx.set_state("atproto_repo", repo)
 
     async def on_call_tool(
         self,
@@ -70,7 +71,7 @@ class AtprotoAuthMiddleware(Middleware):
         call_next: CallNext[mt.CallToolRequestParams, Any],
     ) -> Any:
         """extract credentials from headers on each tool call."""
-        self._extract_credentials()
+        await self._extract_credentials()
         return await call_next(context)
 
     async def on_read_resource(
@@ -81,5 +82,5 @@ class AtprotoAuthMiddleware(Middleware):
         ],
     ) -> Sequence[ReadResourceContents]:
         """extract credentials from headers on each resource read."""
-        self._extract_credentials()
+        await self._extract_credentials()
         return await call_next(context)

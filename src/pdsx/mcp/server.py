@@ -349,7 +349,7 @@ async def list_records(
     # cap limit to prevent context flooding
     effective_limit = min(limit, MAX_LIMIT)
 
-    repo_to_use = repo or get_repo_from_context()
+    repo_to_use = repo or await get_repo_from_context()
     if not repo_to_use:
         raise ValueError(
             "repo parameter is required. example: "
@@ -423,7 +423,7 @@ async def get_record(
     returns:
         record with uri, cid, and value fields
     """
-    repo_to_use = repo or get_repo_from_context()
+    repo_to_use = repo or await get_repo_from_context()
     is_full_uri = uri.startswith("at://")
 
     # for shorthand URIs, repo is required
@@ -542,7 +542,7 @@ async def query(
         # default to the caller's PDS — it proxies authenticated app.bsky.*
         # calls to the AppView, so this works for notifications, private
         # feeds, etc., without the caller needing to know AppView routing.
-        base_url = resolve_pds_url()
+        base_url = await resolve_pds_url()
     else:
         base_url = PUBLIC_APPVIEW
 

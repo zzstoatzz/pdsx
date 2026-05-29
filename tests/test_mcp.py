@@ -355,3 +355,97 @@ class TestContextFloodingProtection:
         assert isinstance(result, dict)
         # message should NOT mention cursor when no more available
         assert "more available via cursor" not in result["message"]
+
+
+class _FakeAsyncContext:
+    """fastmcp 3.x-style context whose get_state/set_state are coroutines."""
+
+    def __init__(self, state: dict | None = None):
+        self._state: dict = dict(state or {})
+
+    async def get_state(self, key: str):
+        return self._state.get(key)
+
+    async def set_state(self, key: str, value, *, serializable: bool = True) -> None:
+        self._state[key] = value
+
+
+class TestAsyncStateRegression:
+    """regression tests for #85: fastmcp 3.x made Context.get_state / set_state
+    coroutines. pdsx must await them, otherwise un-awaited coroutines leak in as
+    credentials and every tool fails with
+    `'coroutine' object has no attribute 'startswith'/'endswith'`.
+    """
+
+    async def test_get_credentials_awaits_get_state(self, monkeypatch):
+        """credentials resolve to plain strings, not un-awaited coroutines."""
+        import fastmcp.server.dependencies as deps
+
+        from pdsx.mcp.client import _get_credentials_from_context
+
+        ctx = _FakeAsyncContext(
+            {
+                "atproto_handle": "alice.bsky.social",
+                "atproto_password": "app-pw",
+                "atproto_pds_url": "https://pds.example",
+                "atproto_repo": "alice.bsky.social",
+            }
+        )
+        monkeypatch.setattr(deps, "get_context", lambda: ctx)
+
+        creds = await _get_credentials_from_context()
+
+        assert creds["handle"] == "alice.bsky.social"
+        assert creds["password"] == "app-pw"
+        assert creds["pds_url"] == "https://pds.example"
+        assert creds["repo"] == "alice.bsky.social"
+        # the actual bug: values must be resolved strings, not coroutine objects
+        for value in creds.values():
+            assert isinstance(value, str)
+
+    async def test_get_repo_from_context_awaits(self, monkeypatch):
+        """get_repo_from_context returns the resolved repo string."""
+        import fastmcp.server.dependencies as deps
+
+        from pdsx.mcp.client import get_repo_from_context
+
+        ctx = _FakeAsyncContext({"atproto_repo": "alice.bsky.social"})
+        monkeypatch.setattr(deps, "get_context", lambda: ctx)
+
+        assert await get_repo_from_context() == "alice.bsky.social"
+
+    async def test_resolve_pds_url_awaits(self, monkeypatch):
+        """resolve_pds_url returns the header pds_url, not a coroutine."""
+        import fastmcp.server.dependencies as deps
+
+        from pdsx.mcp.client import resolve_pds_url
+
+        ctx = _FakeAsyncContext({"atproto_pds_url": "https://pds.example"})
+        monkeypatch.setattr(deps, "get_context", lambda: ctx)
+
+        assert await resolve_pds_url() == "https://pds.example"
+
+    async def test_middleware_awaits_set_state(self, monkeypatch):
+        """middleware writes header credentials into context state (awaiting set_state)."""
+        import fastmcp.server.dependencies as deps
+
+        from pdsx.mcp import middleware as mw
+
+        ctx = _FakeAsyncContext()
+        monkeypatch.setattr(deps, "get_context", lambda: ctx)
+        monkeypatch.setattr(
+            mw,
+            "get_http_headers",
+            lambda include_all=True: {
+                "x-atproto-handle": "alice.bsky.social",
+                "x-atproto-password": "app-pw",
+                "x-atproto-repo": "alice.bsky.social",
+            },
+        )
+
+        await mw.AtprotoAuthMiddleware()._extract_credentials()
+
+        # if set_state weren't awaited, state would stay empty (coroutine discarded)
+        assert ctx._state["atproto_handle"] == "alice.bsky.social"
+        assert ctx._state["atproto_password"] == "app-pw"
+        assert ctx._state["atproto_repo"] == "alice.bsky.social"

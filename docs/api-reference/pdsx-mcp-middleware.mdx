@@ -34,7 +34,7 @@ _extract_credentials(self) -> None
 extract credentials from http headers into fastmcp context.
 
 
-#### `on_call_tool` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/middleware.py#L67" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+#### `on_call_tool` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/middleware.py#L68" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 on_call_tool(self, context: MiddlewareContext[mt.CallToolRequestParams], call_next: CallNext[mt.CallToolRequestParams, Any]) -> Any
@@ -43,7 +43,7 @@ on_call_tool(self, context: MiddlewareContext[mt.CallToolRequestParams], call_ne
 extract credentials from headers on each tool call.
 
 
-#### `on_read_resource` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/middleware.py#L76" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+#### `on_read_resource` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/middleware.py#L77" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 on_read_resource(self, context: MiddlewareContext[mt.ReadResourceRequestParams], call_next: CallNext[mt.ReadResourceRequestParams, Sequence[ReadResourceContents]]) -> Sequence[ReadResourceContents]
