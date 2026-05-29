@@ -188,7 +188,7 @@ async def test_query_with_auth_token_sets_bearer_header(recording_client):
 
 async def test_query_tool_rejects_repo_and_host():
     with pytest.raises(ValueError):
-        await server.query.fn(nsid="com.atproto.sync.listRepos", repo="a", host="b")
+        await server.query(nsid="com.atproto.sync.listRepos", repo="a", host="b")
 
 
 async def test_query_tool_selects_base_url(monkeypatch):
@@ -204,9 +204,9 @@ async def test_query_tool_selects_base_url(monkeypatch):
     monkeypatch.setattr(server, "_query", fake_query)
     monkeypatch.setattr(server, "discover_pds", fake_discover)
 
-    await server.query.fn(nsid="com.atproto.sync.listRepos", host="pds.zat.dev")
-    await server.query.fn(nsid="app.bsky.actor.getProfile", params={"actor": "a"})
-    await server.query.fn(nsid="com.atproto.repo.describeRepo", repo="alice.test")
+    await server.query(nsid="com.atproto.sync.listRepos", host="pds.zat.dev")
+    await server.query(nsid="app.bsky.actor.getProfile", params={"actor": "a"})
+    await server.query(nsid="com.atproto.repo.describeRepo", repo="alice.test")
 
     assert captured == [
         "https://pds.zat.dev",
@@ -221,7 +221,7 @@ async def test_authenticated_query_rejects_non_allowlisted_nsid():
     private-data exfiltration surface (e.g., chat.bsky.convo.*) that an
     untrusted prompt could otherwise reach."""
     with pytest.raises(ValueError, match="allowlist"):
-        await server.query.fn(
+        await server.query(
             nsid="chat.bsky.convo.listConvos",
             authenticated=True,
         )
@@ -246,7 +246,7 @@ async def test_unauthenticated_query_accepts_any_nsid_monkeypatched(monkeypatch)
 
     monkeypatch.setattr(server, "_query", fake_query)
     # an NSID nowhere near the allowlist — fine because authenticated=False
-    await server.query.fn(
+    await server.query(
         nsid="chat.bsky.convo.listConvos", host="x.test", authenticated=False
     )
     assert captured == [("chat.bsky.convo.listConvos", None)]
@@ -275,11 +275,14 @@ async def test_query_tool_authenticated_uses_caller_pds_and_jwt(monkeypatch):
         assert require_auth is True
         yield _FakeClient()
 
+    async def fake_resolve_pds_url():
+        return "https://my-pds.example"
+
     monkeypatch.setattr(server, "_query", fake_query)
     monkeypatch.setattr(server, "get_atproto_client", fake_get_client)
-    monkeypatch.setattr(server, "resolve_pds_url", lambda: "https://my-pds.example")
+    monkeypatch.setattr(server, "resolve_pds_url", fake_resolve_pds_url)
 
-    await server.query.fn(
+    await server.query(
         nsid="app.bsky.notification.listNotifications",
         params={"limit": 30},
         authenticated=True,

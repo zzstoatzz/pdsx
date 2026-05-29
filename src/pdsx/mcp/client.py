@@ -12,7 +12,7 @@ from pdsx.mcp._types import CredentialsContext
 logger = logging.getLogger(__name__)
 
 
-def _get_credentials_from_context() -> CredentialsContext:
+async def _get_credentials_from_context() -> CredentialsContext:
     """extract credentials from fastmcp context if available.
 
     returns:
@@ -29,10 +29,11 @@ def _get_credentials_from_context() -> CredentialsContext:
         from fastmcp.server.dependencies import get_context
 
         ctx = get_context()
-        result["handle"] = ctx.get_state("atproto_handle")
-        result["password"] = ctx.get_state("atproto_password")
-        result["pds_url"] = ctx.get_state("atproto_pds_url")
-        result["repo"] = ctx.get_state("atproto_repo")
+        # fastmcp 3.x made get_state a coroutine; await it (see #85)
+        result["handle"] = await ctx.get_state("atproto_handle")
+        result["password"] = await ctx.get_state("atproto_password")
+        result["pds_url"] = await ctx.get_state("atproto_pds_url")
+        result["repo"] = await ctx.get_state("atproto_repo")
     except RuntimeError as e:
         if "No active context found" not in str(e):
             raise
@@ -109,7 +110,7 @@ async def get_atproto_client(
         async with get_atproto_client() as client:
             records = await client.com.atproto.repo.list_records(...)
     """
-    creds = _get_credentials_from_context()
+    creds = await _get_credentials_from_context()
 
     # use context credentials if available, else fall back to env
     handle = creds["handle"] or os.environ.get("ATPROTO_HANDLE", "")
@@ -162,16 +163,16 @@ async def get_atproto_client(
         pass  # AsyncClient doesn't need explicit cleanup
 
 
-def get_repo_from_context() -> str | None:
+async def get_repo_from_context() -> str | None:
     """get repo override from context if set via x-atproto-repo header."""
-    creds = _get_credentials_from_context()
+    creds = await _get_credentials_from_context()
     repo = creds.get("repo")
     if not repo:
         repo = os.environ.get("ATPROTO_REPO")
     return repo
 
 
-def resolve_pds_url() -> str:
+async def resolve_pds_url() -> str:
     """resolve the caller's PDS URL with the same fallback chain
     ``get_atproto_client`` uses: ``x-atproto-pds-url`` header, then
     ``ATPROTO_PDS_URL`` env, then ``https://bsky.social``.
@@ -181,7 +182,7 @@ def resolve_pds_url() -> str:
     the right default because it proxies authenticated ``app.bsky.*`` calls
     to the AppView.
     """
-    creds = _get_credentials_from_context()
+    creds = await _get_credentials_from_context()
     return (
         creds.get("pds_url")
         or os.environ.get("ATPROTO_PDS_URL")

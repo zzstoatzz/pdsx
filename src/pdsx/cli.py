@@ -188,9 +188,15 @@ async def cmd_upload_blob(client: AsyncClient, file_path: str) -> None:
     # display blob reference in json format for easy copying
     import json
 
+    from atproto_client.models.blob_ref import IpldLink
+
+    # a successful blob upload always returns an IpldLink ref; narrow the
+    # union (str | bytes | IpldLink) so `.link` resolves
+    ref = response.blob.ref
+    link = ref.link if isinstance(ref, IpldLink) else ref
     blob_ref = {
         "$type": "blob",
-        "ref": {"$link": response.blob.ref.link},
+        "ref": {"$link": link},
         "mimeType": response.blob.mime_type,
         "size": response.blob.size,
     }
