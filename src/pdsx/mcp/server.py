@@ -3,6 +3,7 @@
 import json
 from typing import Any
 
+import httpx
 from fastmcp import FastMCP
 
 from pdsx._internal.operations import (
@@ -498,7 +499,10 @@ async def query(
             a deliberate, per-NSID decision: file an issue to add one.
 
     returns:
-        the method's JSON response (large list fields are trimmed; paginate with cursor)
+        the method's JSON response (large list fields are trimmed; paginate
+        with cursor). transport / HTTP / decode failures come back as a
+        structured ``{"error": ..., "message": ...}`` dict rather than
+        raising — so a bad host guess doesn't burn the caller's retry budget.
     """
     if repo and host:
         raise ValueError("pass either 'repo' or 'host', not both")
@@ -546,7 +550,36 @@ async def query(
     else:
         base_url = PUBLIC_APPVIEW
 
-    result = await _query(nsid, base_url, params, auth_token=auth_token)
+    try:
+        result = await _query(nsid, base_url, params, auth_token=auth_token)
+    except httpx.HTTPStatusError as exc:
+        # 4xx/5xx — return as data so the model can adapt (wrong host, bad
+        # params, etc.) instead of burning the agent's retry budget.
+        return {
+            "error": "http_status",
+            "status": exc.response.status_code,
+            "url": str(exc.request.url),
+            "message": exc.response.text[:500],
+        }
+    except httpx.RequestError as exc:
+        # DNS/connect/timeout — same reasoning: surface the failure as data.
+        return {
+            "error": "transport",
+            "url": str(exc.request.url) if exc.request else "",
+            "message": f"{type(exc).__name__}: {exc}",
+        }
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        # the endpoint returned non-JSON (e.g. com.atproto.sync.getBlob returns
+        # raw blob bytes). `query` is JSON-only by contract — tell the caller
+        # they reached for the wrong tool rather than crashing.
+        return {
+            "error": "non_json_response",
+            "message": (
+                f"{nsid!r} did not return JSON ({type(exc).__name__}). "
+                "this endpoint likely returns binary or non-JSON content — "
+                "use a method-specific tool instead of `query`."
+            ),
+        }
     return _truncate_query_response(result)
 
 

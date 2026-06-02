@@ -235,6 +235,59 @@ async def test_authenticated_query_allowlist_contains_notifications():
     )
 
 
+async def test_query_tool_returns_http_error_as_data(monkeypatch):
+    """4xx/5xx come back as structured data instead of raising — a bad host
+    guess during exploration shouldn't burn the agent's retry budget."""
+    import httpx
+
+    async def fake_query(nsid, base_url, params=None, auth_token=None):
+        request = httpx.Request("GET", f"{base_url}/xrpc/{nsid}")
+        response = httpx.Response(404, request=request, content=b"not found here")
+        raise httpx.HTTPStatusError("404", request=request, response=response)
+
+    monkeypatch.setattr(server, "_query", fake_query)
+    result = await server.query(
+        nsid="com.atproto.sync.listRepos", host="grain.social"
+    )
+    assert result["error"] == "http_status"
+    assert result["status"] == 404
+    assert "grain.social" in result["url"]
+    assert "not found here" in result["message"]
+
+
+async def test_query_tool_returns_transport_error_as_data(monkeypatch):
+    """DNS / connect / timeout come back as structured data, not exceptions."""
+    import httpx
+
+    async def fake_query(nsid, base_url, params=None, auth_token=None):
+        request = httpx.Request("GET", f"{base_url}/xrpc/{nsid}")
+        raise httpx.ConnectError("nodename nor servname provided", request=request)
+
+    monkeypatch.setattr(server, "_query", fake_query)
+    result = await server.query(
+        nsid="com.atproto.sync.listRepos", host="pds.grain.social"
+    )
+    assert result["error"] == "transport"
+    assert "ConnectError" in result["message"]
+
+
+async def test_query_tool_returns_non_json_error_as_data(monkeypatch):
+    """a method that returns binary (e.g. sync.getBlob) shouldn't crash — tell
+    the caller they reached for the wrong tool."""
+    import json as _json
+
+    async def fake_query(nsid, base_url, params=None, auth_token=None):
+        raise _json.JSONDecodeError("Expecting value", "\x89PNG", 0)
+
+    monkeypatch.setattr(server, "_query", fake_query)
+    result = await server.query(
+        nsid="com.atproto.sync.getBlob", host="pds.zzstoatzz.io"
+    )
+    assert result["error"] == "non_json_response"
+    assert "com.atproto.sync.getBlob" in result["message"]
+    assert "binary" in result["message"]
+
+
 async def test_unauthenticated_query_accepts_any_nsid_monkeypatched(monkeypatch):
     """the allowlist gate must not affect the unauth path — public reads
     of any NSID are still fine."""
