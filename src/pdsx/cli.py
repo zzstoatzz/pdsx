@@ -435,8 +435,11 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
                 required=True,
             )
         else:
-            # for unauthenticated reads, auto-discover PDS
-            if args.repo:
+            if args.pds:
+                # prefer explicit --pds flag if provided
+                pds_url = args.pds
+            elif args.repo:
+                # for unauthenticated reads, auto-discover PDS
                 pds_url = await discover_pds(args.repo)
             elif is_get_with_full_uri:
                 # extract DID from at://did/collection/rkey
