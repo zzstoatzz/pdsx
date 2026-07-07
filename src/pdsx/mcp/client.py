@@ -55,6 +55,26 @@ async def _get_credentials_from_context() -> CredentialsContext:
         if "get_state" not in str(e):
             raise
 
+    # the middleware that populates context state swallows "no active
+    # context" and can silently skip a request, which surfaced as one-off
+    # AuthenticationRequired errors on tool calls that did carry headers.
+    # read the headers directly as a fallback so credentials never depend
+    # on the middleware hop.
+    if not (result["handle"] and result["password"]):
+        try:
+            from fastmcp.server.dependencies import get_http_headers
+
+            headers = get_http_headers(include_all=True)
+        except Exception:
+            headers = {}
+        if headers:
+            result["handle"] = result["handle"] or headers.get("x-atproto-handle")
+            result["password"] = result["password"] or headers.get(
+                "x-atproto-password"
+            )
+            result["pds_url"] = result["pds_url"] or headers.get("x-atproto-pds-url")
+            result["repo"] = result["repo"] or headers.get("x-atproto-repo")
+
     return result
 
 

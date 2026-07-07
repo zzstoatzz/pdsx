@@ -481,3 +481,60 @@ class TestAsyncStateRegression:
         assert ctx._state["atproto_handle"] == "alice.bsky.social"
         assert ctx._state["atproto_password"] == "app-pw"
         assert ctx._state["atproto_repo"] == "alice.bsky.social"
+
+
+class TestHeaderFallback:
+    """regression: the middleware hop can silently skip a request (it
+    swallows "no active context"), which surfaced in production as one-off
+    AuthenticationRequired errors on tool calls that DID carry credential
+    headers. _get_credentials_from_context must fall back to reading the
+    headers directly when context state is empty."""
+
+    @pytest.mark.parametrize("ctx_cls", _CONTEXT_KINDS)
+    async def test_falls_back_to_headers_when_state_empty(
+        self, monkeypatch, ctx_cls
+    ):
+        import fastmcp.server.dependencies as deps
+
+        from pdsx.mcp.client import _get_credentials_from_context
+
+        monkeypatch.setattr(deps, "get_context", lambda: ctx_cls())
+        monkeypatch.setattr(
+            deps,
+            "get_http_headers",
+            lambda include_all=True: {
+                "x-atproto-handle": "alice.bsky.social",
+                "x-atproto-password": "app-pw",
+                "x-atproto-pds-url": "https://pds.example",
+            },
+        )
+
+        creds = await _get_credentials_from_context()
+
+        assert creds["handle"] == "alice.bsky.social"
+        assert creds["password"] == "app-pw"
+        assert creds["pds_url"] == "https://pds.example"
+
+    @pytest.mark.parametrize("ctx_cls", _CONTEXT_KINDS)
+    async def test_state_wins_over_headers(self, monkeypatch, ctx_cls):
+        import fastmcp.server.dependencies as deps
+
+        from pdsx.mcp.client import _get_credentials_from_context
+
+        ctx = ctx_cls(
+            {"atproto_handle": "state.bsky.social", "atproto_password": "state-pw"}
+        )
+        monkeypatch.setattr(deps, "get_context", lambda: ctx)
+        monkeypatch.setattr(
+            deps,
+            "get_http_headers",
+            lambda include_all=True: {
+                "x-atproto-handle": "header.bsky.social",
+                "x-atproto-password": "header-pw",
+            },
+        )
+
+        creds = await _get_credentials_from_context()
+
+        assert creds["handle"] == "state.bsky.social"
+        assert creds["password"] == "state-pw"
