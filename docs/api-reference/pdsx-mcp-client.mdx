@@ -38,7 +38,7 @@ extract credentials from fastmcp context if available.
 - credentials dict with handle, password, pds_url, repo (any may be None)
 
 
-### `get_atproto_client` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L93" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `get_atproto_client` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L113" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 get_atproto_client(require_auth: bool = False, operation: str = 'this operation', target_repo: str | None = None) -> AsyncIterator[AsyncClient]
@@ -68,7 +68,7 @@ this enables both:
 - `AuthenticationRequired`: if require_auth=True and no credentials available
 
 
-### `get_repo_from_context` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L180" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `get_repo_from_context` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L200" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 get_repo_from_context() -> str | None
@@ -78,7 +78,7 @@ get_repo_from_context() -> str | None
 get repo override from context if set via x-atproto-repo header.
 
 
-### `resolve_pds_url` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L189" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `resolve_pds_url` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L209" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 resolve_pds_url() -> str
@@ -97,7 +97,7 @@ to the AppView.
 
 ## Classes
 
-### `AuthenticationRequired` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L85" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `AuthenticationRequired` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L105" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 
 raised when an operation requires authentication but none was provided.
@@ -105,7 +105,7 @@ raised when an operation requires authentication but none was provided.
 
 **Methods:**
 
-#### `__init__` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L88" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+#### `__init__` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L108" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 __init__(self, operation: str = 'this operation')
