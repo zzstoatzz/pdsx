@@ -530,7 +530,12 @@ async def query(
             require_auth=True,
             operation="an authenticated query",
         ) as client:
-            session = client.me
+            # the JWT lives on the client's Session object (client._session),
+            # NOT on client.me — that's the profile view and has no
+            # access_jwt attribute. reading it from `me` made every
+            # authenticated query raise AuthenticationRequired *after* a
+            # successful login, masquerading as "no credentials provided".
+            session = getattr(client, "_session", None)
             access_jwt = (
                 getattr(session, "access_jwt", None) if session is not None else None
             )

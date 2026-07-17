@@ -320,8 +320,21 @@ async def test_query_tool_authenticated_uses_caller_pds_and_jwt(monkeypatch):
     class _FakeSession:
         access_jwt = "jwt-from-session"
 
+    class _FakeProfile:
+        """client.me is a profile view — it has NO access_jwt attribute.
+
+        the original version of this test put the jwt on `me`, which encoded
+        the exact bug it should have caught: the server read the jwt from
+        client.me and every real authenticated query failed after login.
+        the fake must match the real SDK shape: jwt on client._session only.
+        """
+
+        handle = "someone.example"
+        did = "did:plc:someone"
+
     class _FakeClient:
-        me = _FakeSession()
+        me = _FakeProfile()
+        _session = _FakeSession()
 
     @asynccontextmanager
     async def fake_get_client(require_auth=False, operation="", target_repo=None):
