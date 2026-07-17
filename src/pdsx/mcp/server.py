@@ -462,41 +462,37 @@ async def query(
 
     this is the read counterpart the record tools don't cover — sync, identity,
     server, and the app.bsky.* getter family. it is GET-only and structurally
-    cannot create, update, delete, post, or act as a procedure. by default it
-    is unauthenticated; pass ``authenticated=True`` for endpoints that require
-    a session (e.g., notifications, private feeds, auth-required graph getters).
+    cannot create, update, delete, post, or act as a procedure.
 
-    examples (unauth):
+    authentication is automatic: the few NSIDs that require the caller's
+    session (``AUTHENTICATED_QUERY_ALLOWLIST`` — currently notifications)
+    are queried with it; everything else is queried publicly. there is no
+    auth knob to get wrong — the allowlist is the whole decision.
+
+    examples:
     - query("com.atproto.sync.listRepos", host="pds.zat.dev")
         -> who is hosted on a PDS
     - query("com.atproto.identity.resolveHandle", params={"handle": "bufo.uk"})
         -> resolve a handle to a DID
     - query("app.bsky.actor.getProfile", params={"actor": "phi.zzstoatzz.io"})
         -> a user's public profile
-    - query("app.bsky.feed.getQuotes", params={"uri": "at://.../post/xyz"})
-        -> who quoted a post (no auth required)
-
-    examples (auth):
-    - query("app.bsky.notification.listNotifications",
-            params={"limit": 30}, authenticated=True)
-        -> your own notifications
+    - query("app.bsky.notification.listNotifications", params={"limit": 30})
+        -> your own notifications (session attached automatically)
 
     targeting (choose at most one):
         repo: a handle or DID — routes to that user's PDS (for sync.*/repo.* host queries)
         host: an explicit service base URL or bare host, e.g. "pds.zat.dev"
-        neither: defaults to the public appview (unauth) or your PDS (auth);
-            your PDS proxies authenticated app.bsky.* calls to the AppView.
+        neither: defaults to the public appview, or your PDS for
+            session-backed NSIDs (it proxies authenticated app.bsky.*
+            calls to the AppView).
 
     args:
         nsid: the query method, e.g. "com.atproto.sync.listRepos"
         params: query parameters for the method
         host: service to target (bare host gets https://)
         repo: handle or DID whose PDS to target
-        authenticated: send the caller's session token (Bearer JWT). still
-            GET-only / SSRF-guarded / no-redirects — only the authority axis
-            changes, and only NSIDs in ``AUTHENTICATED_QUERY_ALLOWLIST`` are
-            permitted (currently notifications). extending the allowlist is
-            a deliberate, per-NSID decision: file an issue to add one.
+        authenticated: deprecated and ignored — auth is decided by the
+            allowlist. kept so existing callers don't fail validation.
 
     returns:
         the method's JSON response (large list fields are trimmed; paginate
@@ -509,19 +505,13 @@ async def query(
 
     auth_token: str | None = None
 
-    if authenticated:
-        # gate at the authority boundary: authenticated reads can expose
-        # private account data, so the NSID must be on the explicit allowlist.
-        # the unauth path stays open to any NSID (public data anyway).
-        if nsid not in AUTHENTICATED_QUERY_ALLOWLIST:
-            raise ValueError(
-                f"{nsid!r} is not on the authenticated-query allowlist. "
-                f"allowed: {sorted(AUTHENTICATED_QUERY_ALLOWLIST)}. file an "
-                "issue at https://github.com/zzstoatzz/pdsx if you need it "
-                "added — extending the allowlist is a deliberate decision "
-                "that the response is acceptable for an agentic caller to "
-                "read with the operator's session."
-            )
+    # the allowlist is the whole auth decision: NSIDs on it require the
+    # caller's session and can expose private account data (extending it is
+    # a deliberate, per-NSID review — file an issue). NSIDs off it are
+    # public data and are always queried without credentials, regardless of
+    # the deprecated `authenticated` flag — a caller-supplied auth knob was
+    # a degree of freedom the server already fully determines.
+    if nsid in AUTHENTICATED_QUERY_ALLOWLIST:
         # resolve the caller's session and extract the access JWT; the JWT is
         # an opaque string we then send as Bearer on the GET. the context
         # manager just yields the client — exiting it does not invalidate the
@@ -547,7 +537,7 @@ async def query(
         base_url = await discover_pds(repo)
     elif host:
         base_url = normalize_service_url(host)
-    elif authenticated:
+    elif auth_token:
         # default to the caller's PDS — it proxies authenticated app.bsky.*
         # calls to the AppView, so this works for notifications, private
         # feeds, etc., without the caller needing to know AppView routing.
