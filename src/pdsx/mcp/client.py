@@ -69,9 +69,7 @@ async def _get_credentials_from_context() -> CredentialsContext:
             headers = {}
         if headers:
             result["handle"] = result["handle"] or headers.get("x-atproto-handle")
-            result["password"] = result["password"] or headers.get(
-                "x-atproto-password"
-            )
+            result["password"] = result["password"] or headers.get("x-atproto-password")
             result["pds_url"] = result["pds_url"] or headers.get("x-atproto-pds-url")
             result["repo"] = result["repo"] or headers.get("x-atproto-repo")
 

@@ -10,7 +10,7 @@ pdsx MCP server implementation using fastmcp.
 
 ## Functions
 
-### `_clean_value` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L75" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `_clean_value` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L76" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 _clean_value(value: Any) -> dict[str, Any]
@@ -26,7 +26,7 @@ removes:
 - verbose reply structure (keeps just uris)
 
 
-### `_truncate_list_response` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L145" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `_truncate_list_response` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L146" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 _truncate_list_response(records: list[RecordResponse], total_fetched: int, has_more: bool) -> list[RecordResponse] | dict[str, Any]
@@ -38,7 +38,7 @@ truncate list response if it exceeds size limits.
 returns either the original list or a dict with truncated results and a message.
 
 
-### `_truncate_query_response` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L182" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `_truncate_query_response` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L183" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 _truncate_query_response(result: dict[str, Any]) -> dict[str, Any]
@@ -51,7 +51,7 @@ trims the largest list-valued field (e.g. listRepos' 'repos') until the
 serialized response fits, and annotates what was dropped.
 
 
-### `usage_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L226" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `usage_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L227" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 usage_guide() -> str
@@ -61,7 +61,7 @@ usage_guide() -> str
 instructions for using pdsx MCP tools.
 
 
-### `create_post_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L273" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `create_post_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L274" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 create_post_guide() -> str
@@ -71,7 +71,7 @@ create_post_guide() -> str
 instructions for creating posts.
 
 
-### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L328" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L329" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 list_records(collection: str, limit: int = 10, repo: str | None = None, cursor: str | None = None) -> list[RecordResponse] | dict[str, Any]
@@ -94,7 +94,7 @@ examples:
 - list of records with uri, cid, and value fields
 
 
-### `describe_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L378" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `describe_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L379" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 describe_repo(repo: str) -> RepoDescriptionResponse
@@ -116,7 +116,7 @@ examples:
 - dict with handle, did, collections, and handleIsCorrect
 
 
-### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L409" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L410" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 get_record(uri: str, repo: str | None = None) -> RecordResponse
@@ -137,7 +137,7 @@ examples:
 - record with uri, cid, and value fields
 
 
-### `query` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L453" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `query` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L454" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 query(nsid: str, params: dict[str, Any] | None = None, host: str | None = None, repo: str | None = None, authenticated: bool = False) -> dict[str, Any]
@@ -148,47 +148,49 @@ call a read-only XRPC *query* method (HTTP GET).
 
 this is the read counterpart the record tools don't cover — sync, identity,
 server, and the app.bsky.* getter family. it is GET-only and structurally
-cannot create, update, delete, post, or act as a procedure. by default it
-is unauthenticated; pass ``authenticated=True`` for endpoints that require
-a session (e.g., notifications, private feeds, auth-required graph getters).
+cannot create, update, delete, post, or act as a procedure.
 
-examples (unauth):
+authentication is automatic: the few NSIDs that require the caller's
+session (``AUTHENTICATED_QUERY_ALLOWLIST`` — currently notifications)
+are queried with it; everything else is queried publicly. there is no
+auth knob to get wrong — the allowlist is the whole decision.
+
+**Examples:**
+
+
+
 - query("com.atproto.sync.listRepos", host="pds.zat.dev")
     -> who is hosted on a PDS
 - query("com.atproto.identity.resolveHandle", params={"handle": "bufo.uk"})
     -> resolve a handle to a DID
 - query("app.bsky.actor.getProfile", params={"actor": "phi.zzstoatzz.io"})
     -> a user's public profile
-- query("app.bsky.feed.getQuotes", params={"uri": "at://.../post/xyz"})
-    -> who quoted a post (no auth required)
-
-examples (auth):
-- query("app.bsky.notification.listNotifications",
-        params={"limit": 30}, authenticated=True)
-    -> your own notifications
+- query("app.bsky.notification.listNotifications", params={"limit": 30})
+    -> your own notifications (session attached automatically)
 
 targeting (choose at most one):
     repo: a handle or DID — routes to that user's PDS (for sync.*/repo.* host queries)
     host: an explicit service base URL or bare host, e.g. "pds.zat.dev"
-    neither: defaults to the public appview (unauth) or your PDS (auth);
-        your PDS proxies authenticated app.bsky.* calls to the AppView.
+    neither: defaults to the public appview, or your PDS for
+        session-backed NSIDs (it proxies authenticated app.bsky.*
+        calls to the AppView).
 
 **Args:**
 - `nsid`: the query method, e.g. "com.atproto.sync.listRepos"
 - `params`: query parameters for the method
 - `host`: service to target (bare host gets https\://)
 - `repo`: handle or DID whose PDS to target
-- `authenticated`: send the caller's session token (Bearer JWT). still
-GET-only / SSRF-guarded / no-redirects — only the authority axis
-changes, and only NSIDs in ``AUTHENTICATED_QUERY_ALLOWLIST`` are
-permitted (currently notifications). extending the allowlist is
-a deliberate, per-NSID decision\: file an issue to add one.
+- `authenticated`: deprecated and ignored — auth is decided by the
+allowlist. kept so existing callers don't fail validation.
 
 **Returns:**
-- the method's JSON response (large list fields are trimmed; paginate with cursor)
+- the method's JSON response (large list fields are trimmed; paginate
+- with cursor). transport / HTTP / decode failures come back as a
+- structured ``{"error": ..., "message": ...}`` dict rather than
+- raising — so a bad host guess doesn't burn the caller's retry budget.
 
 
-### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L554" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L582" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 create_record(collection: str, record: dict[str, Any], rkey: str | None = None) -> CreateResponse
@@ -207,7 +209,7 @@ create a new record. requires authentication.
 - dict with uri and cid of created record
 
 
-### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L579" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L607" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 update_record(uri: str, updates: dict[str, Any]) -> UpdateResponse
@@ -226,7 +228,7 @@ fetches the current record, merges your updates, and puts it back.
 - dict with uri and cid of updated record
 
 
-### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L603" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L631" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 delete_record(uri: str) -> DeleteResponse
@@ -246,7 +248,7 @@ examples:
 - confirmation with deleted uri
 
 
-### `whoami` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L629" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `whoami` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L657" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 whoami() -> IdentityResponse
@@ -262,7 +264,7 @@ requires authentication via x-atproto-handle and x-atproto-password headers.
 - dict with handle and did of authenticated user
 
 
-### `me_resource` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L653" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `me_resource` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L681" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 me_resource() -> str
@@ -272,7 +274,7 @@ me_resource() -> str
 current authenticated user identity.
 
 
-### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L669" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L697" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 main() -> None

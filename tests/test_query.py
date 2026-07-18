@@ -215,16 +215,27 @@ async def test_query_tool_selects_base_url(monkeypatch):
     ]
 
 
-async def test_authenticated_query_rejects_non_allowlisted_nsid():
-    """authenticated=True with an NSID not on the allowlist refuses cleanly,
-    without making any network call or touching credentials. closes the
-    private-data exfiltration surface (e.g., chat.bsky.convo.*) that an
-    untrusted prompt could otherwise reach."""
-    with pytest.raises(ValueError, match="allowlist"):
-        await server.query(
-            nsid="chat.bsky.convo.listConvos",
-            authenticated=True,
-        )
+async def test_non_allowlisted_nsid_never_gets_credentials(monkeypatch):
+    """an NSID off the allowlist is queried publicly — no session, no JWT —
+    even when a caller passes the deprecated authenticated=True flag. this
+    closes the private-data exfiltration surface (e.g., chat.bsky.convo.*)
+    that an untrusted prompt could otherwise reach: the allowlist is the
+    whole auth decision, and no caller-supplied knob can widen it."""
+    captured: list = []
+
+    async def fake_query(nsid, base_url, params=None, auth_token=None):
+        captured.append({"base_url": base_url, "auth_token": auth_token})
+        return {"ok": True}
+
+    def fail_get_client(*a, **k):  # pragma: no cover - must never run
+        raise AssertionError("credentials must not be touched for public NSIDs")
+
+    monkeypatch.setattr(server, "_query", fake_query)
+    monkeypatch.setattr(server, "get_atproto_client", fail_get_client)
+
+    await server.query(nsid="chat.bsky.convo.listConvos", authenticated=True)
+
+    assert captured == [{"base_url": server.PUBLIC_APPVIEW, "auth_token": None}]
 
 
 async def test_authenticated_query_allowlist_contains_notifications():
@@ -246,9 +257,7 @@ async def test_query_tool_returns_http_error_as_data(monkeypatch):
         raise httpx.HTTPStatusError("404", request=request, response=response)
 
     monkeypatch.setattr(server, "_query", fake_query)
-    result = await server.query(
-        nsid="com.atproto.sync.listRepos", host="grain.social"
-    )
+    result = await server.query(nsid="com.atproto.sync.listRepos", host="grain.social")
     assert result["error"] == "http_status"
     assert result["status"] == 404
     assert "grain.social" in result["url"]
@@ -306,9 +315,9 @@ async def test_unauthenticated_query_accepts_any_nsid_monkeypatched(monkeypatch)
 
 
 async def test_query_tool_authenticated_uses_caller_pds_and_jwt(monkeypatch):
-    """when authenticated=True with no host/repo, route to caller's PDS and
-    attach the session JWT as Bearer — the PDS proxies app.bsky.* auth calls
-    to the AppView."""
+    """an allowlisted NSID with no host/repo routes to the caller's PDS and
+    attaches the session JWT as Bearer automatically — no flag needed. the
+    PDS proxies app.bsky.* auth calls to the AppView."""
     from contextlib import asynccontextmanager
 
     captured: list = []
@@ -320,8 +329,21 @@ async def test_query_tool_authenticated_uses_caller_pds_and_jwt(monkeypatch):
     class _FakeSession:
         access_jwt = "jwt-from-session"
 
+    class _FakeProfile:
+        """client.me is a profile view — it has NO access_jwt attribute.
+
+        the original version of this test put the jwt on `me`, which encoded
+        the exact bug it should have caught: the server read the jwt from
+        client.me and every real authenticated query failed after login.
+        the fake must match the real SDK shape: jwt on client._session only.
+        """
+
+        handle = "someone.example"
+        did = "did:plc:someone"
+
     class _FakeClient:
-        me = _FakeSession()
+        me = _FakeProfile()
+        _session = _FakeSession()
 
     @asynccontextmanager
     async def fake_get_client(require_auth=False, operation="", target_repo=None):
@@ -338,7 +360,6 @@ async def test_query_tool_authenticated_uses_caller_pds_and_jwt(monkeypatch):
     await server.query(
         nsid="app.bsky.notification.listNotifications",
         params={"limit": 30},
-        authenticated=True,
     )
 
     assert captured == [
