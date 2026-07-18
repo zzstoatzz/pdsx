@@ -257,9 +257,7 @@ async def test_query_tool_returns_http_error_as_data(monkeypatch):
         raise httpx.HTTPStatusError("404", request=request, response=response)
 
     monkeypatch.setattr(server, "_query", fake_query)
-    result = await server.query(
-        nsid="com.atproto.sync.listRepos", host="grain.social"
-    )
+    result = await server.query(nsid="com.atproto.sync.listRepos", host="grain.social")
     assert result["error"] == "http_status"
     assert result["status"] == 404
     assert "grain.social" in result["url"]

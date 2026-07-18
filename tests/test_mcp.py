@@ -491,9 +491,7 @@ class TestHeaderFallback:
     headers directly when context state is empty."""
 
     @pytest.mark.parametrize("ctx_cls", _CONTEXT_KINDS)
-    async def test_falls_back_to_headers_when_state_empty(
-        self, monkeypatch, ctx_cls
-    ):
+    async def test_falls_back_to_headers_when_state_empty(self, monkeypatch, ctx_cls):
         import fastmcp.server.dependencies as deps
 
         from pdsx.mcp.client import _get_credentials_from_context
