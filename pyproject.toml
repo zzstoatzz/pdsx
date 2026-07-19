@@ -34,6 +34,7 @@ dependencies = [
 [project.optional-dependencies]
 mcp = [
     "fastmcp>=3.3",
+    "typing-extensions>=4.12",
     "jmespath>=1.0",
 ]
 

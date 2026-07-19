@@ -979,6 +979,7 @@ dependencies = [
 mcp = [
     { name = "fastmcp" },
     { name = "jmespath" },
+    { name = "typing-extensions" },
 ]
 
 [package.dev-dependencies]
@@ -1004,6 +1005,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.7.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rich", specifier = ">=13.0.0" },
+    { name = "typing-extensions", marker = "extra == 'mcp'", specifier = ">=4.12" },
 ]
 provides-extras = ["mcp"]
 
