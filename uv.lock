@@ -969,10 +969,12 @@ name = "pdsx"
 source = { editable = "." }
 dependencies = [
     { name = "atproto" },
+    { name = "fastmcp" },
     { name = "httpx" },
     { name = "pydantic-settings" },
     { name = "pyyaml" },
     { name = "rich" },
+    { name = "typing-extensions" },
 ]
 
 [package.optional-dependencies]
@@ -999,12 +1001,14 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "atproto", specifier = ">=0.0.63" },
+    { name = "fastmcp", specifier = ">=3.3" },
     { name = "fastmcp", marker = "extra == 'mcp'", specifier = ">=3.3" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "jmespath", marker = "extra == 'mcp'", specifier = ">=1.0" },
     { name = "pydantic-settings", specifier = ">=2.7.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rich", specifier = ">=13.0.0" },
+    { name = "typing-extensions", specifier = ">=4.12" },
     { name = "typing-extensions", marker = "extra == 'mcp'", specifier = ">=4.12" },
 ]
 provides-extras = ["mcp"]
