@@ -29,13 +29,13 @@ dependencies = [
     "pydantic-settings>=2.7.0",
     "pyyaml>=6.0.3",
     "rich>=13.0.0",
-    "fastmcp>=3.3",
+    "fastmcp==4.0.0a1",
     "typing-extensions>=4.12",
 ]
 
 [project.optional-dependencies]
 mcp = [
-    "fastmcp>=3.3",
+    "fastmcp==4.0.0a1",
     "typing-extensions>=4.12",
     "jmespath>=1.0",
 ]
@@ -54,7 +54,7 @@ dev = [
     "ty>=0.0.1a25",
     "mdxify>=0.2.34",
     "pytest-mock>=3.15.1",
-    "fastmcp>=3.3",
+    "fastmcp==4.0.0a1",
     "jmespath>=1.0",
 ]
 
@@ -70,6 +70,13 @@ vcs = "git"
 style = "pep440"
 bump = true
 fallback-version = "0.0.0"
+
+[tool.uv]
+constraint-dependencies = [
+    "fastmcp-slim==4.0.0a1",
+    "mcp==2.0.0b2",
+    "mcp-types==2.0.0b2",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
