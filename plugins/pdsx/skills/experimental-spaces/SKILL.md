@@ -11,6 +11,10 @@ user-invocable: true
 
 [proposal]: https://github.com/bluesky-social/proposals/tree/main/0016-permissioned-data
 
+`pdsx spaces` needs **0.1.7 or newer**. Installing without
+`--prerelease=allow` silently gives you 0.1.5, which has no `spaces` command at
+all — check with `pdsx --version` if the subcommand is missing.
+
 Permissioned data lives outside the public repo. Records in a *space* are not
 in `listRecords`, do not appear on the firehose, and require a credential to
 read. pdsx exposes the read side:

@@ -6,12 +6,15 @@ user-invocable: true
 
 # reading records
 
+<!-- `--prerelease=allow` is required: pdsx pins fastmcp==4.0.0a1, and without
+the flag a resolver silently installs 0.1.5 instead of erroring. -->
+
 Every read targets a repo. Public repo data needs no credentials — `-r` is
 enough, and works against self-hosted servers because pdsx resolves each
 repo's own PDS from its DID document.
 
 ```bash
-uvx pdsx -r zzstoatzz.io ls app.bsky.feed.post
+uvx --prerelease=allow pdsx -r zzstoatzz.io ls app.bsky.feed.post
 ```
 
 ## `-r` is required for reads, always
@@ -36,7 +39,7 @@ Omit the collection to list the repo's collections. Do this before guessing at
 lexicon names — most repos carry records from apps you haven't heard of.
 
 ```bash
-uvx pdsx -r zzstoatzz.io ls
+uvx --prerelease=allow pdsx -r zzstoatzz.io ls
 ```
 
 ## pagination is not automatic — this is the big one
@@ -51,14 +54,14 @@ last week and simply sits on page two.
 The cursor goes to **stderr**, so `-o json` on stdout stays pipeable:
 
 ```bash
-uvx pdsx -r zzstoatzz.io ls app.bsky.feed.post -o json | jq '.[].uri'
+uvx --prerelease=allow pdsx -r zzstoatzz.io ls app.bsky.feed.post -o json | jq '.[].uri'
 # stderr: next page cursor: 3mrgybvq4w22y
 ```
 
 Follow it explicitly:
 
 ```bash
-uvx pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 100 --cursor 3mrgybvq4w22y
+uvx --prerelease=allow pdsx -r zzstoatzz.io ls app.bsky.feed.post --limit 100 --cursor 3mrgybvq4w22y
 ```
 
 When you need a whole collection, loop until no cursor comes back, or go
@@ -75,10 +78,10 @@ you actually reached the end.** Sorting one page tells you about that page.
 
 ```bash
 # full AT-URI
-uvx pdsx get at://did:plc:xbtmt2zjwlrfegqvch7fboei/app.bsky.feed.post/abc123
+uvx --prerelease=allow pdsx get at://did:plc:xbtmt2zjwlrfegqvch7fboei/app.bsky.feed.post/abc123
 
 # shorthand, with -r supplying the repo
-uvx pdsx -r zzstoatzz.io get app.bsky.actor.profile/self
+uvx --prerelease=allow pdsx -r zzstoatzz.io get app.bsky.actor.profile/self
 ```
 
 Shorthand is `collection/rkey`. Profile records always use rkey `self`.
@@ -96,7 +99,7 @@ own PDS.
 
 ```bash
 # 1. pull the ref out of the record
-CID=$(uvx pdsx -r zzstoatzz.io get app.bsky.actor.profile/self -o json \
+CID=$(uvx --prerelease=allow pdsx -r zzstoatzz.io get app.bsky.actor.profile/self -o json \
       | jq -r '.value.avatar.ref."$link"')
 
 # 2. resolve the repo's DID and its PDS

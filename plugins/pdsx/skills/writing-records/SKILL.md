@@ -11,7 +11,7 @@ Writes always go to **your own repo** — the authenticated account. There is no
 
 ```bash
 export ATPROTO_HANDLE=you.bsky.social ATPROTO_PASSWORD=xxxx-xxxx
-uvx pdsx create app.bsky.feed.post text='hello'
+uvx --prerelease=allow pdsx create app.bsky.feed.post text='hello'
 ```
 
 Use an **app password**, never your account password. Writes reach whatever PDS
@@ -25,7 +25,7 @@ get wrong, and a write aimed at the wrong account is not always obvious
 afterward.
 
 ```bash
-uvx pdsx whoami
+uvx --prerelease=allow pdsx whoami
 # zzstoatzz.io (did:plc:xbtmt2zjwlrfegqvch7fboei)
 ```
 
@@ -53,7 +53,7 @@ singleton records — a profile is always rkey `self`.
 result back. Fields you don't mention survive.
 
 ```bash
-uvx pdsx edit app.bsky.actor.profile/self description='new bio'
+uvx --prerelease=allow pdsx edit app.bsky.actor.profile/self description='new bio'
 # displayName, avatar, banner all still there
 ```
 
@@ -85,7 +85,7 @@ A blob has to exist on the PDS before a record can point at it. Upload returns
 the reference to embed.
 
 ```bash
-uvx pdsx upload-blob avatar.jpg
+uvx --prerelease=allow pdsx upload-blob avatar.jpg
 ```
 
 ```json
@@ -113,24 +113,24 @@ recorded and the run continues; `--fail-fast` stops at the first one.
 ```bash
 # create many
 printf '%s\n' '{"text":"post 1"}' '{"text":"post 2"}' \
-  | uvx pdsx create app.bsky.feed.post
+  | uvx --prerelease=allow pdsx create app.bsky.feed.post
 
 # update many — each line needs a uri
 printf '%s\n' '{"uri":"at://…/abc","text":"fixed"}' \
-  | uvx pdsx update
+  | uvx --prerelease=allow pdsx update
 
 # delete many — plain AT-URIs, one per line
-printf '%s\n' 'at://…/abc' 'at://…/def' | uvx pdsx rm
+printf '%s\n' 'at://…/abc' 'at://…/def' | uvx --prerelease=allow pdsx rm
 ```
 
 This composes with reads. Build the URI list, **look at it**, then pipe:
 
 ```bash
-uvx pdsx -r you.bsky.social ls app.bsky.feed.post -o json \
+uvx --prerelease=allow pdsx -r you.bsky.social ls app.bsky.feed.post -o json \
   | jq -r '.[] | select(.value.text | test("^test ")) | .uri' > doomed.txt
 
 wc -l doomed.txt && head doomed.txt      # confirm the set before acting
-uvx pdsx rm < doomed.txt
+uvx --prerelease=allow pdsx rm < doomed.txt
 ```
 
 Never pipe a filter straight into `rm`. The list is cheap to inspect and the
@@ -146,15 +146,15 @@ useless to every consumer.
 Verify by reading back rather than trusting the write:
 
 ```bash
-uvx pdsx create app.bsky.feed.post text='hello'      # note the returned uri
-uvx pdsx -r you.bsky.social get app.bsky.feed.post/<rkey> -o json
+uvx --prerelease=allow pdsx create app.bsky.feed.post text='hello'      # note the returned uri
+uvx --prerelease=allow pdsx -r you.bsky.social get app.bsky.feed.post/<rkey> -o json
 ```
 
 Compare against a record that already works — the strongest check available:
 
 ```bash
 # see how a real record of this type is shaped before writing your own
-uvx pdsx -r someone.bsky.social ls app.bsky.feed.post --limit 1 -o json
+uvx --prerelease=allow pdsx -r someone.bsky.social ls app.bsky.feed.post --limit 1 -o json
 ```
 
 Shapes that are easy to get wrong:
