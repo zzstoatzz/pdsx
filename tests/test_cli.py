@@ -244,3 +244,27 @@ class TestAuthenticatedPdsResolution:
         assert await cli.async_main() == 0
         discover.assert_not_awaited()
         assert client_cls.call_args.kwargs["base_url"] == "https://other.example"
+
+
+class TestDescribeException:
+    """a failure the user cannot name is barely better than a silent one.
+
+    regression: atproto SDK exceptions like InvokeTimeoutError carry no
+    message, so `error: {e}` rendered as a bare "error:" with nothing after.
+    """
+
+    def test_empty_message_falls_back_to_type_name(self) -> None:
+        from atproto_client.exceptions import InvokeTimeoutError
+
+        from pdsx.cli import describe_exception
+
+        rendered = describe_exception(InvokeTimeoutError())
+        assert rendered.strip()
+        assert "InvokeTimeoutError" in rendered
+
+    def test_real_message_is_preserved(self) -> None:
+        from pdsx.cli import describe_exception
+
+        assert describe_exception(ValueError("no record at a.b.c/x")) == (
+            "no record at a.b.c/x"
+        )
