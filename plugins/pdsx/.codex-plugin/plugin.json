@@ -3,13 +3,20 @@
   "version": "0.1.0",
   "description": "AT Protocol record operations — read and write any repo's records from the CLI or as MCP tools.",
   "author": {
-    "name": "nate",
-    "url": "https://bsky.app/profile/zzstoatzz.io"
+    "name": "zzstoatzz",
+    "email": "thrast36@gmail.com",
+    "url": "https://github.com/zzstoatzz"
   },
   "repository": "https://github.com/zzstoatzz/pdsx",
   "homepage": "https://pdsx.zzstoatzz.io",
   "license": "MIT",
-  "keywords": ["atproto", "bluesky", "pds", "records", "decentralized"],
+  "keywords": [
+    "atproto",
+    "bluesky",
+    "pds",
+    "records",
+    "decentralized"
+  ],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
@@ -18,7 +25,10 @@
     "longDescription": "pdsx gives Codex direct access to AT Protocol repositories: list, read, create, update and delete records in any repo, upload blobs, and run batch operations over JSONL. Reads work against any public repo without credentials. Bundles the hosted pdsx MCP server for structured record access — no local runtime to install.",
     "developerName": "nate",
     "category": "Engineering",
-    "capabilities": ["Read", "Write"],
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
     "websiteURL": "https://pdsx.zzstoatzz.io",
     "defaultPrompt": [
       "list the most recent posts from zzstoatzz.io",
