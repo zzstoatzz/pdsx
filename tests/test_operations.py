@@ -8,6 +8,7 @@ import pytest
 from atproto import AsyncClient, models
 
 from pdsx._internal.operations import (
+    RecordNotFoundError,
     create_record,
     delete_record,
     describe_repo,
@@ -175,6 +176,7 @@ class TestDeleteRecord:
 
     async def test_full_uri_format(self, mock_client: AsyncClient) -> None:
         """test delete with full at:// URI format."""
+        mock_client.com.atproto.repo.get_record = AsyncMock()  # type: ignore[attr-defined]
         mock_client.com.atproto.repo.delete_record = AsyncMock()  # type: ignore[attr-defined]
 
         await delete_record(
@@ -190,6 +192,7 @@ class TestDeleteRecord:
 
     async def test_shorthand_uri_format(self, mock_client: AsyncClient) -> None:
         """test delete with shorthand URI format (collection/rkey)."""
+        mock_client.com.atproto.repo.get_record = AsyncMock()  # type: ignore[attr-defined]
         mock_client.com.atproto.repo.delete_record = AsyncMock()  # type: ignore[attr-defined]
 
         await delete_record(
@@ -404,3 +407,37 @@ class TestDescribeRepo:
 
         assert result.handle == "other.bsky.social"
         assert result.collections == ["app.bsky.feed.post"]
+
+
+class TestDeleteRecordMissing:
+    """deleting a nonexistent record must not report success.
+
+    regression: com.atproto.repo.deleteRecord is idempotent, so a delete
+    against the wrong repo (or a bad rkey) returned 200 and printed
+    "deleted" despite removing nothing.
+    """
+
+    async def test_missing_record_raises(self, mock_client: AsyncClient) -> None:
+        mock_client.com.atproto.repo.get_record = AsyncMock(  # type: ignore[attr-defined]
+            side_effect=Exception("RecordNotFound: Could not locate record: at://...")
+        )
+        mock_client.com.atproto.repo.delete_record = AsyncMock()  # type: ignore[attr-defined]
+
+        with pytest.raises(RecordNotFoundError, match="no record at"):
+            await delete_record(mock_client, "app.bsky.feed.post/missing")
+
+        mock_client.com.atproto.repo.delete_record.assert_not_called()
+
+    async def test_unrelated_error_is_not_swallowed(
+        self, mock_client: AsyncClient
+    ) -> None:
+        """an auth/network failure must not be reported as a missing record."""
+        mock_client.com.atproto.repo.get_record = AsyncMock(  # type: ignore[attr-defined]
+            side_effect=Exception("BadJwtSignature")
+        )
+        mock_client.com.atproto.repo.delete_record = AsyncMock()  # type: ignore[attr-defined]
+
+        with pytest.raises(Exception, match="BadJwtSignature"):
+            await delete_record(mock_client, "app.bsky.feed.post/abc123")
+
+        mock_client.com.atproto.repo.delete_record.assert_not_called()

@@ -10,7 +10,7 @@ atproto record operations.
 
 ## Functions
 
-### `_normalize_query_params` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L24" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `_normalize_query_params` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L28" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 _normalize_query_params(params: dict[str, Any]) -> dict[str, Any]
@@ -23,7 +23,7 @@ XRPC expects lowercase booleans ('true'/'false'); httpx would otherwise
 render Python bools as 'True'/'False'.
 
 
-### `query` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L38" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `query` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L42" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 query(nsid: str, base_url: str, params: dict[str, Any] | None = None, timeout: float = 10.0, auth_token: str | None = None) -> dict[str, Any]
@@ -55,7 +55,7 @@ adds the authority axis without weakening the mutation axis.
 - {'result': &lt;value&gt;}
 
 
-### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L85" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L89" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 list_records(client: AsyncClient, collection: str, limit: int, repo: str | None = None, cursor: str | None = None) -> models.ComAtprotoRepoListRecords.Response
@@ -75,7 +75,7 @@ list records in a collection.
 - response with records and optional cursor for next page
 
 
-### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L120" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L124" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 get_record(client: AsyncClient, uri: str, repo: str | None = None) -> models.ComAtprotoRepoGetRecord.Response
@@ -93,7 +93,7 @@ get a specific record.
 - record response
 
 
-### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L163" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L167" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 create_record(client: AsyncClient, collection: str, record: dict[str, RecordValue], rkey: str | None = None) -> models.ComAtprotoRepoCreateRecord.Response
@@ -112,7 +112,7 @@ create a new record.
 - created record response
 
 
-### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L203" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L207" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 update_record(client: AsyncClient, uri: str, updates: dict[str, RecordValue]) -> models.ComAtprotoRepoPutRecord.Response
@@ -130,7 +130,7 @@ update an existing record.
 - updated record response
 
 
-### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L247" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L251" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 delete_record(client: AsyncClient, uri: str) -> None
@@ -143,8 +143,11 @@ delete a record.
 - `client`: authenticated atproto client
 - `uri`: record AT-URI (can be shorthand like 'collection/rkey' if authenticated)
 
+**Raises:**
+- `RecordNotFoundError`: if no record exists at the URI
 
-### `describe_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L268" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+### `describe_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L283" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 describe_repo(client: AsyncClient, repo: str) -> models.ComAtprotoRepoDescribeRepo.Response
@@ -161,7 +164,7 @@ describe a repo, listing its collections.
 - response with handle, did, didDoc, collections, handleIsCorrect
 
 
-### `upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L284" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L299" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 upload_blob(client: AsyncClient, file_path: str | Path) -> models.ComAtprotoRepoUploadBlob.Response
@@ -176,4 +179,12 @@ upload a blob (image, video, etc.).
 
 **Returns:**
 - upload response with blob reference
+
+
+## Classes
+
+### `RecordNotFoundError` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/operations.py#L24" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+
+raised when an operation targets a record that does not exist.
 
