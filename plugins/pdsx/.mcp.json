@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pdsx": {
+      "type": "http",
+      "url": "https://pdsx-by-zzstoatzz.fastmcp.app/mcp"
+    }
+  }
+}

@@ -41,6 +41,31 @@ uvx pdsx edit app.bsky.actor.profile/self description='new bio'
 - jq-friendly json output
 - python 3.10+, type-safe
 
+## plugin (claude code / codex)
+
+installs the hosted MCP server and the bundled skills together — no local runtime.
+
+```bash
+# claude code
+/plugin marketplace add https://github.com/zzstoatzz/pdsx
+/plugin install pdsx
+
+# codex
+codex plugin marketplace add https://github.com/zzstoatzz/pdsx
+codex plugin add pdsx@pdsx
+```
+
+from a clone, for local development:
+
+```bash
+claude --plugin-dir .
+```
+
+| skill | what it does |
+|-------|-------------|
+| `/pdsx:cli` | the CLI — batch operations over JSONL, blob upload, output formats |
+| `/pdsx:bsky` | bluesky lexicon shapes — posts, replies, profiles, facets |
+
 ## MCP server
 
 pdsx includes an MCP server for AI agent integration (e.g., claude code, cursor).

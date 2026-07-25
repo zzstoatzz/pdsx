@@ -1,0 +1,20 @@
+{
+  "name": "pdsx",
+  "interface": {
+    "displayName": "pdsx"
+  },
+  "plugins": [
+    {
+      "name": "pdsx",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pdsx"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Engineering"
+    }
+  ]
+}

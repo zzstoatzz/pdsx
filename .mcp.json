@@ -1,6 +1,8 @@
 {
-  "pdsx": {
-    "command": "uvx",
-    "args": ["--from", "pdsx[mcp]", "pdsx-mcp"]
+  "mcpServers": {
+    "pdsx": {
+      "command": "uvx",
+      "args": ["--from", "pdsx[mcp]", "pdsx-mcp"]
+    }
   }
 }
