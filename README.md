@@ -63,8 +63,9 @@ claude --plugin-dir .
 
 | skill | what it does |
 |-------|-------------|
-| `/pdsx:cli` | the CLI — batch operations over JSONL, blob upload, output formats |
-| `/pdsx:bsky` | bluesky lexicon shapes — posts, replies, profiles, facets |
+| `/pdsx:reading-records` | reading records and blobs from any repo — auth vs none, pagination, identity |
+| `/pdsx:writing-records` | creating, updating, deleting, blob upload, batch JSONL, verifying writes |
+| `/pdsx:experimental-spaces` | permissioned data (`com.atproto.space.*`) — experimental, rarely served |
 
 ## MCP server
 
@@ -223,6 +224,7 @@ pdsx -r zzstoatzz.io cat app.bsky.actor.profile/self  # default
 git clone https://github.com/zzstoatzz/pdsx
 cd pdsx
 uv sync
+just hooks      # install pre-commit hooks — CI skips the plugin manifests
 uv run pytest
 uv run ty check
 ```

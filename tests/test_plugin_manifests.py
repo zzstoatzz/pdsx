@@ -94,3 +94,34 @@ def test_every_skill_has_usable_frontmatter() -> None:
             f"{skill.name}: frontmatter name is {declared!r}; "
             "the directory name is what clients invoke"
         )
+
+
+def test_no_hand_written_versions() -> None:
+    """versions come from git tags, never from a literal in a manifest.
+
+    the package version is derived by uv-dynamic-versioning; a hardcoded
+    manifest version is wrong the moment the next release is cut.
+    """
+    import subprocess
+
+    tagged = subprocess.run(
+        ["git", "describe", "--tags", "--abbrev=0"],
+        capture_output=True,
+        text=True,
+        cwd=REPO,
+    )
+    if tagged.returncode != 0:
+        pytest.skip("no git tags available in this checkout")
+    expected = tagged.stdout.strip().lstrip("v")
+
+    codex = json.loads((PLUGIN / ".codex-plugin" / "plugin.json").read_text())
+    assert codex.get("version") == expected, (
+        f"codex manifest version is {codex.get('version')!r}, git tag says "
+        f"{expected!r} — run scripts/sync_plugin_version.py"
+    )
+
+    claude = json.loads((REPO / ".claude-plugin" / "plugin.json").read_text())
+    assert "version" not in claude, (
+        "the claude manifest should carry no version at all; it has no "
+        "generator to keep one honest"
+    )
