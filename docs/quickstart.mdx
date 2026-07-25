@@ -7,14 +7,32 @@ description: "get up and running with pdsx in 5 minutes"
 
 ```bash
 # use with uvx (no install)
-uvx pdsx --help
+uvx --prerelease=allow pdsx --help
 
 # or install with uv
-uv add pdsx
+uv add --prerelease=allow pdsx
 
 # or install with pip
-pip install pdsx
+pip install --pre pdsx
 ```
+
+<Warning>
+The pre-release flag is required. pdsx depends on `fastmcp==4.0.0a1`, and
+resolvers skip pre-releases unless asked.
+
+Leaving it off does **not** produce an error — you silently get **0.1.5**, the
+last release published before that pin. Check with `pdsx --version` if something
+seems missing.
+
+To make it persistent in a project:
+
+```toml
+[tool.uv]
+prerelease = "allow"
+```
+
+This requirement goes away when fastmcp 4.0 ships stable.
+</Warning>
 
 ## reading records (no auth)
 
