@@ -54,6 +54,22 @@ from pdsx._internal.resolution import discover_pds  # noqa: E402
 from pdsx._internal.types import RecordValue  # noqa: E402
 
 
+def describe_exception(exc: BaseException) -> str:
+    """render an exception for the user, never as an empty string.
+
+    Several atproto SDK exceptions (InvokeTimeoutError among them) carry no
+    message, so interpolating them produced a bare "error:" with nothing after
+    it — a failure the user cannot act on or even name.
+    """
+    text = str(exc).strip()
+    if text:
+        return text
+    doc = (type(exc).__doc__ or "").strip().splitlines()
+    detail = doc[0].rstrip(".").lower() if doc else ""
+    name = type(exc).__name__
+    return f"{name} ({detail})" if detail else name
+
+
 async def cmd_list(
     client: AsyncClient,
     collection: str,
@@ -659,7 +675,7 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
                 try:
                     parsed = read_records_from_stdin()
                 except ValueError as e:
-                    console.print(f"[red]error:[/red] {e}")
+                    console.print(f"[red]error:[/red] {describe_exception(e)}")
                     return 1
 
                 if not parsed:
@@ -712,7 +728,7 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
                 try:
                     updates_list = read_updates_from_stdin()
                 except ValueError as e:
-                    console.print(f"[red]error:[/red] {e}")
+                    console.print(f"[red]error:[/red] {describe_exception(e)}")
                     return 1
             else:
                 console.print(
@@ -794,7 +810,7 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
         return 0
 
     except Exception as e:
-        console.print(f"[red]error:[/red] {e}")
+        console.print(f"[red]error:[/red] {describe_exception(e)}")
         import os
 
         if os.getenv("DEBUG"):
