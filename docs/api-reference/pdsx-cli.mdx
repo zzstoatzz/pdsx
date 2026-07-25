@@ -10,7 +10,7 @@ general-purpose cli for atproto record operations.
 
 ## Functions
 
-### `cmd_list` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L50" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_list` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L57" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 cmd_list(client: AsyncClient, collection: str, limit: int, repo: str | None = None, cursor: str | None = None, output_format: OutputFormat | None = None) -> None
@@ -20,7 +20,7 @@ cmd_list(client: AsyncClient, collection: str, limit: int, repo: str | None = No
 list records in a collection.
 
 
-### `cmd_describe` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L77" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_describe` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L84" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 cmd_describe(client: AsyncClient, repo: str, output_format: OutputFormat | None = None) -> None
@@ -30,7 +30,7 @@ cmd_describe(client: AsyncClient, repo: str, output_format: OutputFormat | None 
 describe a repo, listing its collections.
 
 
-### `cmd_get` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L88" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_get` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L95" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 cmd_get(client: AsyncClient, uri: str, output_format: OutputFormat | None = None, repo: str | None = None) -> None
@@ -40,7 +40,7 @@ cmd_get(client: AsyncClient, uri: str, output_format: OutputFormat | None = None
 get a specific record.
 
 
-### `cmd_create` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L100" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_create` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L107" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 cmd_create(client: AsyncClient, collection: str, records: list[dict[str, RecordValue]]) -> None
@@ -50,7 +50,7 @@ cmd_create(client: AsyncClient, collection: str, records: list[dict[str, RecordV
 create one or more records.
 
 
-### `cmd_update` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L131" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_update` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L138" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 cmd_update(client: AsyncClient, updates_list: list[tuple[str, dict[str, RecordValue]]]) -> None
@@ -60,7 +60,7 @@ cmd_update(client: AsyncClient, updates_list: list[tuple[str, dict[str, RecordVa
 update one or more records.
 
 
-### `cmd_delete` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L158" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_delete` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L165" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 cmd_delete(client: AsyncClient, uris: list[str]) -> None
@@ -70,7 +70,7 @@ cmd_delete(client: AsyncClient, uris: list[str]) -> None
 delete one or more records.
 
 
-### `cmd_upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L184" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_upload_blob` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L191" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 cmd_upload_blob(client: AsyncClient, file_path: str) -> None
@@ -80,7 +80,7 @@ cmd_upload_blob(client: AsyncClient, file_path: str) -> None
 upload a blob (image, video, etc.).
 
 
-### `cmd_whoami` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L211" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `cmd_whoami` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L218" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 cmd_whoami(client: AsyncClient) -> None
@@ -90,7 +90,47 @@ cmd_whoami(client: AsyncClient) -> None
 show authenticated identity.
 
 
-### `async_main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L220" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `_print_unsupported` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L227" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_print_unsupported(exc: PermissionedDataUnsupported) -> None
+```
+
+### `cmd_spaces_list` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L231" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+cmd_spaces_list(client: AsyncClient, pds_url: str) -> int
+```
+
+
+list permissioned spaces, degrading to an empty result if unsupported.
+
+Enumeration has a legitimate empty answer, so an unsupported PDS is
+reported explicitly and exits 0 rather than failing — but it always says
+why, so "none" is never silently indistinguishable from "can't ask".
+
+
+### `cmd_space_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L270" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+cmd_space_records(client: AsyncClient, pds_url: str) -> int
+```
+
+
+list records in a permissioned space.
+
+
+### `cmd_space_get` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L314" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+cmd_space_get(client: AsyncClient, pds_url: str) -> int
+```
+
+
+get one record from a permissioned space.
+
+
+### `async_main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L342" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 async_main() -> int
@@ -100,7 +140,7 @@ async_main() -> int
 main entry point.
 
 
-### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L604" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/cli.py#L805" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 main() -> NoReturn
