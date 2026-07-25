@@ -46,6 +46,14 @@ class NotAuthenticated(Exception):
     """permissioned-data reads require an authenticated session."""
 
 
+class SpaceQueryError(Exception):
+    """the PDS served the method and rejected the request.
+
+    Distinct from PermissionedDataUnsupported: the namespace works, this
+    particular call did not (missing space, missing record, no access).
+    """
+
+
 def access_jwt(client: AsyncClient) -> str:
     """pull the session JWT off an authenticated client.
 
@@ -94,7 +102,21 @@ async def space_query(
                 f"{pds_url} does not serve permissioned data "
                 f"(it may be unimplemented, or disabled by the operator)"
             ) from exc
-        raise
+        raise SpaceQueryError(_describe_error(exc)) from exc
+
+
+def _describe_error(exc: httpx.HTTPStatusError) -> str:
+    """render an atproto error body as one readable line.
+
+    The raw httpx message is a URL dump with the actual reason buried in it.
+    """
+    try:
+        body = exc.response.json()
+    except ValueError:
+        return f"{exc.response.status_code} {exc.response.text[:200]}"
+    name = body.get("error") or exc.response.status_code
+    message = body.get("message")
+    return f"{name}: {message}" if message else str(name)
 
 
 async def supports_permissioned_data(client: AsyncClient, pds_url: str) -> bool:

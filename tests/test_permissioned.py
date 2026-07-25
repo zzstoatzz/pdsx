@@ -10,6 +10,7 @@ import pytest
 from pdsx._internal.permissioned import (
     NotAuthenticated,
     PermissionedDataUnsupported,
+    SpaceQueryError,
     access_jwt,
     get_space_record,
     list_spaces,
@@ -83,7 +84,7 @@ class TestUnsupportedDetection:
                 )
             ),
         )
-        with pytest.raises(httpx.HTTPStatusError):
+        with pytest.raises(SpaceQueryError, match="RecordNotFound"):
             await get_space_record(
                 _client(),
                 PDS,
@@ -99,7 +100,7 @@ class TestUnsupportedDetection:
             "pdsx._internal.permissioned.query",
             AsyncMock(side_effect=_http_error(401, '{"error":"AuthMissing"}')),
         )
-        with pytest.raises(httpx.HTTPStatusError):
+        with pytest.raises(SpaceQueryError, match="AuthMissing"):
             await space_query(_client(), "com.atproto.space.listSpaces", PDS)
 
 
