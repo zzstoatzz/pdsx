@@ -1,6 +1,7 @@
 """tests for pdsx MCP server."""
 
 import json
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -162,12 +163,41 @@ class TestGetAtprotoClient:
         async with get_atproto_client(target_repo="jay.bsky.team") as client:
             assert "bsky.network" in client._base_url
 
-    async def test_default_pds_when_no_target(self):
-        """uses default bsky.social when no target_repo."""
+    async def test_default_pds_when_no_target(self, monkeypatch):
+        """uses default bsky.social when no target_repo and no credentials.
+
+        the env vars are cleared explicitly: with a handle configured this
+        path now resolves that account's PDS, so leaving a real
+        ATPROTO_HANDLE in the environment used to make this test fail by
+        authenticating for real against bsky.social.
+        """
         from pdsx.mcp.client import get_atproto_client
+
+        for var in ("ATPROTO_HANDLE", "ATPROTO_PASSWORD", "ATPROTO_PDS_URL"):
+            monkeypatch.delenv(var, raising=False)
 
         async with get_atproto_client() as client:
             assert "bsky.social" in client._base_url
+
+    async def test_authenticated_calls_resolve_own_pds(self, monkeypatch, mocker):
+        """auth must target the account's own PDS, not the bsky.social default.
+
+        regression: a self-hosted account got a bsky.social-issued token that
+        its real PDS rejected with BadJwtSignature — the same defect the CLI
+        had.
+        """
+        from pdsx.mcp import client as mcp_client
+
+        monkeypatch.setenv("ATPROTO_HANDLE", "zzstoatzz.io")
+        monkeypatch.setenv("ATPROTO_PASSWORD", "fake-password")
+        monkeypatch.delenv("ATPROTO_PDS_URL", raising=False)
+        login = mocker.patch.object(
+            mcp_client, "login_with_session_fallback", AsyncMock()
+        )
+
+        async with mcp_client.get_atproto_client(require_auth=True) as client:
+            assert "pds.zzstoatzz.io" in client._base_url
+        login.assert_awaited_once()
 
     async def test_skips_auth_when_reading_other_pds(self, monkeypatch):
         """doesn't try to authenticate when reading from another user's PDS."""

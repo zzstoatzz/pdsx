@@ -9,6 +9,7 @@ from typing import Any
 
 from atproto import AsyncClient
 
+from pdsx._internal.auth import login_with_session_fallback
 from pdsx.mcp._types import CredentialsContext
 
 logger = logging.getLogger(__name__)
@@ -168,24 +169,34 @@ async def get_atproto_client(
             logger.warning("failed to discover PDS for %s: %s", target_repo, e)
 
     if not pds_url:
-        pds_url = (
-            creds["pds_url"]
-            or os.environ.get("ATPROTO_PDS_URL")
-            or "https://bsky.social"
-        )
+        pds_url = creds["pds_url"] or os.environ.get("ATPROTO_PDS_URL")
+
+    if not pds_url and handle:
+        # authenticated calls must reach the account's OWN pds: bsky.social
+        # mints a token the real host rejects with BadJwtSignature. the CLI
+        # had the same defect; keep the two paths resolving identically.
+        from pdsx._internal.resolution import discover_pds
+
+        try:
+            pds_url = await discover_pds(handle)
+        except ValueError as e:
+            logger.warning("failed to discover PDS for %s: %s", handle, e)
+
+    if not pds_url:
+        pds_url = "https://bsky.social"
 
     client = AsyncClient(pds_url)
 
     if require_auth:
         if handle and password:
             logger.debug("authenticating with provided credentials")
-            await client.login(handle, password)
+            await login_with_session_fallback(client, handle, password)
         else:
             raise AuthenticationRequired(operation)
     elif handle and password and not skip_auth:
         # only authenticate if we're not reading from another user's PDS
         logger.debug("authenticating with provided credentials")
-        await client.login(handle, password)
+        await login_with_session_fallback(client, handle, password)
     else:
         logger.debug("using unauthenticated client for %s", pds_url)
 

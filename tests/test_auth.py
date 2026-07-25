@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from atproto.exceptions import AtProtocolError
 
-from pdsx._internal.auth import _login
+from pdsx._internal.auth import login_with_session_fallback
 
 
 def _session(did: str = "did:plc:test", handle: str = "zat.dev") -> MagicMock:
@@ -29,7 +29,7 @@ class TestLoginWithoutAppviewProxy:
         client._session = _session()
         client.me = None
 
-        await _login(client, "zat.dev", "pw")
+        await login_with_session_fallback(client, "zat.dev", "pw")
 
         assert client.me.did == "did:plc:test"
         assert client.me.handle == "zat.dev"
@@ -41,7 +41,7 @@ class TestLoginWithoutAppviewProxy:
         client._session = None
 
         with pytest.raises(AtProtocolError):
-            await _login(client, "zat.dev", "wrong")
+            await login_with_session_fallback(client, "zat.dev", "wrong")
 
     async def test_normal_login_untouched(self) -> None:
         """on a PDS that proxies the AppView, nothing changes."""
@@ -49,7 +49,7 @@ class TestLoginWithoutAppviewProxy:
         client.login = AsyncMock()
         client.me = "profile-from-appview"
 
-        await _login(client, "zzstoatzz.io", "pw")
+        await login_with_session_fallback(client, "zzstoatzz.io", "pw")
 
         client.login.assert_awaited_once_with("zzstoatzz.io", "pw")
         assert client.me == "profile-from-appview"
