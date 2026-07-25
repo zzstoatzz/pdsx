@@ -391,6 +391,9 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
         parser.print_help()
         return 1
 
+    # capture before the assignment below, which would itself mark the field set
+    pds_configured = "atproto_pds_url" in settings.model_fields_set
+
     # update pds if provided
     if args.pds:
         settings.atproto_pds_url = args.pds
@@ -423,9 +426,17 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
 
         # create client with or without base_url depending on auth
         if auth_needed:
-            # for authenticated operations, let SDK discover PDS from handle
-            # unless user explicitly provided --pds flag
-            client = AsyncClient(base_url=args.pds) if args.pds else AsyncClient()
+            # writes must go to the account's own PDS: a bare AsyncClient()
+            # defaults to bsky.social, which mints a token the real PDS then
+            # rejects with BadJwtSignature (self-hosted accounts)
+            handle = args.handle or settings.atproto_handle
+            if args.pds or pds_configured:
+                pds_url = settings.atproto_pds_url
+            elif handle:
+                pds_url = await discover_pds(handle)
+            else:
+                pds_url = settings.atproto_pds_url
+            client = AsyncClient(base_url=pds_url)
 
             await login(
                 client,
