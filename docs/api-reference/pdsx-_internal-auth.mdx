@@ -10,7 +10,27 @@ authentication utilities for atproto.
 
 ## Functions
 
-### `login` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/auth.py#L21" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `_login` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/auth.py#L23" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_login(client: AsyncClient, handle: str, password: str) -> None
+```
+
+
+log in, tolerating PDSes that do not proxy AppView methods.
+
+``AsyncClient.login`` establishes the session and then populates
+``client.me`` via ``app.bsky.actor.getProfile`` — an AppView method. A PDS
+that doesn't proxy it (zds, for one) answers 404 ``UnknownMethod`` at that
+second step, *after* the session is already set, so a login that actually
+succeeded surfaces as a total failure.
+
+Only the profile lookup is optional, so fall back to the identity the
+session already carries. A non-existent session means createSession itself
+failed (bad credentials), which must still raise.
+
+
+### `login` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/auth.py#L47" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 login(client: AsyncClient, handle: str | None = None, password: str | None = None) -> bool
