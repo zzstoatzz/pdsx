@@ -21,6 +21,10 @@ from pdsx._internal.resolution import URIParts, reject_private_host
 from pdsx._internal.types import RecordValue
 
 
+class RecordNotFoundError(Exception):
+    """raised when an operation targets a record that does not exist."""
+
+
 def _normalize_query_params(params: dict[str, Any]) -> dict[str, Any]:
     """coerce values into XRPC-friendly query params.
 
@@ -253,16 +257,27 @@ async def delete_record(
     Args:
         client: authenticated atproto client
         uri: record AT-URI (can be shorthand like 'collection/rkey' if authenticated)
+
+    Raises:
+        RecordNotFoundError: if no record exists at the URI
     """
     parts = URIParts.from_uri(uri, client.me.did if client.me else None)
+    target = {
+        "repo": parts.repo,
+        "collection": parts.collection,
+        "rkey": parts.rkey,
+    }
 
-    await client.com.atproto.repo.delete_record(
-        {
-            "repo": parts.repo,
-            "collection": parts.collection,
-            "rkey": parts.rkey,
-        }
-    )
+    # deleteRecord is idempotent, so it succeeds just as loudly on a record
+    # that was never there — check first so a no-op can't look like a delete
+    try:
+        await client.com.atproto.repo.get_record(target)
+    except Exception as e:
+        if "RecordNotFound" in str(e) or "Could not locate record" in str(e):
+            raise RecordNotFoundError(f"no record at {uri}") from e
+        raise
+
+    await client.com.atproto.repo.delete_record(target)
 
 
 async def describe_repo(
