@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -190,3 +191,56 @@ class TestDiscoverPds:
 
         with pytest.raises(ValueError, match="could not find PDS"):
             await discover_pds("test.handle")
+
+
+class TestAuthenticatedPdsResolution:
+    """writes must target the account's own PDS, not the bsky.social default.
+
+    regression: a bare AsyncClient() defaults to bsky.social, so writes for
+    self-hosted accounts were signed by the wrong host and rejected with
+    BadJwtSignature.
+    """
+
+    @pytest.mark.asyncio
+    async def test_write_discovers_pds_from_handle(self, mocker) -> None:
+        from pdsx import cli
+
+        mocker.patch.object(cli.settings, "atproto_handle", "zzstoatzz.io")
+        mocker.patch.object(cli.settings, "atproto_password", "pw")
+        mocker.patch.object(cli.settings, "atproto_pds_url", "https://bsky.social")
+        mocker.patch.object(type(cli.settings), "model_fields_set", set())
+
+        discover = mocker.patch.object(
+            cli, "discover_pds", AsyncMock(return_value="https://pds.zzstoatzz.io")
+        )
+        client_cls = mocker.patch.object(cli, "AsyncClient")
+        mocker.patch.object(cli, "login", AsyncMock())
+        mocker.patch.object(cli, "cmd_delete", AsyncMock())
+        mocker.patch.object(
+            sys, "argv", ["pdsx", "rm", "site.standard.document/some-rkey"]
+        )
+
+        assert await cli.async_main() == 0
+        discover.assert_awaited_once_with("zzstoatzz.io")
+        assert client_cls.call_args.kwargs["base_url"] == "https://pds.zzstoatzz.io"
+
+    @pytest.mark.asyncio
+    async def test_explicit_pds_flag_skips_discovery(self, mocker) -> None:
+        from pdsx import cli
+
+        mocker.patch.object(cli.settings, "atproto_handle", "zzstoatzz.io")
+        mocker.patch.object(cli.settings, "atproto_password", "pw")
+
+        discover = mocker.patch.object(cli, "discover_pds", AsyncMock())
+        client_cls = mocker.patch.object(cli, "AsyncClient")
+        mocker.patch.object(cli, "login", AsyncMock())
+        mocker.patch.object(cli, "cmd_delete", AsyncMock())
+        mocker.patch.object(
+            sys,
+            "argv",
+            ["pdsx", "--pds", "https://other.example", "rm", "a.b.c/rkey"],
+        )
+
+        assert await cli.async_main() == 0
+        discover.assert_not_awaited()
+        assert client_cls.call_args.kwargs["base_url"] == "https://other.example"
