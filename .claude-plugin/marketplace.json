@@ -1,5 +1,6 @@
 {
   "name": "pdsx",
+  "description": "AT Protocol record operations",
   "owner": {
     "name": "zzstoatzz",
     "email": "thrast36@gmail.com"
@@ -7,9 +8,8 @@
   "plugins": [
     {
       "name": "pdsx",
-      "description": "ATProto record operations - generic MCP server for reading/writing records, with skills for specific apps",
-      "source": "./",
-      "skills": ["./skills/bsky", "./skills/cli"]
+      "description": "AT Protocol record operations — read and write any repo's records from the CLI or as MCP tools.",
+      "source": "./"
     }
   ]
 }

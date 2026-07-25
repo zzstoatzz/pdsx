@@ -1,18 +1,21 @@
 {
   "name": "pdsx",
-  "description": "ATProto record operations - generic MCP server for reading/writing records, with skills for specific apps",
+  "description": "AT Protocol record operations — read and write any repo's records from the CLI or as MCP tools.",
   "author": {
     "name": "zzstoatzz",
     "email": "thrast36@gmail.com",
     "url": "https://github.com/zzstoatzz"
   },
   "repository": "https://github.com/zzstoatzz/pdsx",
+  "homepage": "https://pdsx.zzstoatzz.io",
+  "license": "MIT",
   "keywords": [
     "atproto",
     "bluesky",
-    "records",
     "pds",
+    "records",
     "decentralized"
   ],
-  "mcpServers": "./.mcp.json"
+  "skills": "./plugins/pdsx/skills/",
+  "mcpServers": "./plugins/pdsx/.mcp.json"
 }

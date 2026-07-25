@@ -2,6 +2,10 @@
 generate-docs:
     uv run mdxify --all --root-module pdsx --output-dir docs/api-reference --include-internal
 
+# install git hooks (pre-commit runs locally, not just in CI)
+hooks:
+    uvx prek install
+
 # run tests
 test:
     uv run pytest tests/ -xvs

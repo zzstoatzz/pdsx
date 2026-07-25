@@ -41,6 +41,32 @@ uvx pdsx edit app.bsky.actor.profile/self description='new bio'
 - jq-friendly json output
 - python 3.10+, type-safe
 
+## plugin (claude code / codex)
+
+installs the hosted MCP server and the bundled skills together — no local runtime.
+
+```bash
+# claude code
+/plugin marketplace add https://github.com/zzstoatzz/pdsx
+/plugin install pdsx
+
+# codex
+codex plugin marketplace add https://github.com/zzstoatzz/pdsx
+codex plugin add pdsx@pdsx
+```
+
+from a clone, for local development:
+
+```bash
+claude --plugin-dir .
+```
+
+| skill | what it does |
+|-------|-------------|
+| `/pdsx:reading-records` | reading records and blobs from any repo — auth vs none, pagination, identity |
+| `/pdsx:writing-records` | creating, updating, deleting, blob upload, batch JSONL, verifying writes |
+| `/pdsx:experimental-spaces` | permissioned data (`com.atproto.space.*`) — experimental, rarely served |
+
 ## MCP server
 
 pdsx includes an MCP server for AI agent integration (e.g., claude code, cursor).
@@ -198,6 +224,7 @@ pdsx -r zzstoatzz.io cat app.bsky.actor.profile/self  # default
 git clone https://github.com/zzstoatzz/pdsx
 cd pdsx
 uv sync
+just hooks      # install pre-commit hooks — CI skips the plugin manifests
 uv run pytest
 uv run ty check
 ```

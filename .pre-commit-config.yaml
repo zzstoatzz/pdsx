@@ -29,6 +29,23 @@ repos:
         types: [python]
         pass_filenames: false
 
+      # a malformed plugin manifest fails silently at install time, so it has
+      # to be caught here rather than at runtime — and CI's path filter skips
+      # these files entirely
+      - id: sync-plugin-version
+        name: sync plugin version from git tag
+        entry: uv run python scripts/sync_plugin_version.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: plugin-manifests
+        name: validate plugin manifests
+        entry: uv run pytest tests/test_plugin_manifests.py -q
+        language: system
+        pass_filenames: false
+        always_run: true
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
