@@ -37,7 +37,18 @@ use an [app password](https://bsky.app/settings/app-passwords), not your account
 
 ### custom PDS
 
-if you're running your own PDS (personal data server), add the PDS URL header:
+nothing extra to configure. pdsx resolves your account's PDS from your handle's
+DID document, so a self-hosted account authenticates with the same two headers
+as everyone else.
+
+<Note>
+this used to require an `x-atproto-pds-url` header. it no longer does — authenticated
+calls previously defaulted to `bsky.social`, which mints a token your own PDS rejects
+with `BadJwtSignature`. the PDS is now discovered from your handle.
+</Note>
+
+`x-atproto-pds-url` still exists as an override, for pointing at a host that
+differs from what your DID document names:
 
 ```bash
 claude mcp add-json pdsx '{
@@ -51,9 +62,8 @@ claude mcp add-json pdsx '{
 }'
 ```
 
-<Note>
-when reading public data from other users, pdsx automatically discovers their PDS - you don't need to configure anything. the `x-atproto-pds-url` header is only needed for write operations to your own account on a custom PDS.
-</Note>
+reading public data from another account never needs configuration — pdsx
+discovers their PDS too.
 
 ## local/self-hosted
 
@@ -87,15 +97,23 @@ claude mcp add pdsx --env ATPROTO_HANDLE=your.handle --env ATPROTO_PASSWORD=your
 
 ## available tools
 
-the MCP server exposes five tools for record operations:
+the MCP server exposes eight tools:
 
 | tool | auth required | description |
 |------|--------------|-------------|
 | `list_records` | only without `repo` | list records in a collection |
 | `get_record` | only without `repo` | get a specific record by URI |
+| `describe_repo` | only without `repo` | list the collections a repo holds |
+| `query` | depends on method | issue an arbitrary read-only XRPC query |
 | `create_record` | always | create a new record |
 | `update_record` | always | update an existing record |
 | `delete_record` | always | delete a record |
+| `whoami` | always | show the authenticated identity |
+
+<Note>
+permissioned data (`pdsx spaces …`) is **CLI only** — there are no MCP tools for
+`com.atproto.space.*` while the proposal is still experimental.
+</Note>
 
 ### read operations
 

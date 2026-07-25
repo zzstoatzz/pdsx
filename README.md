@@ -43,7 +43,9 @@ uvx pdsx edit app.bsky.actor.profile/self description='new bio'
 
 ## plugin (claude code / codex)
 
-installs the hosted MCP server and the bundled skills together — no local runtime.
+installs the hosted MCP server **and** the skills together — no local runtime. this
+is the recommended way to use pdsx with an agent: the MCP server gives it the tools,
+the skills teach it the parts that are easy to get wrong.
 
 ```bash
 # claude code
@@ -61,11 +63,56 @@ from a clone, for local development:
 claude --plugin-dir .
 ```
 
-| skill | what it does |
-|-------|-------------|
-| `/pdsx:reading-records` | reading records and blobs from any repo — auth vs none, pagination, identity |
-| `/pdsx:writing-records` | creating, updating, deleting, blob upload, batch JSONL, verifying writes |
-| `/pdsx:experimental-spaces` | permissioned data (`com.atproto.space.*`) — experimental, rarely served |
+### the skills
+
+| skill | reach for it when |
+|-------|-------------------|
+| `/pdsx:reading-records` | inspecting what an account published, pulling records out of a PDS, fetching blob content, or exploring an unfamiliar lexicon |
+| `/pdsx:writing-records` | creating, updating or deleting records, uploading blobs, running batch operations, or checking that a write did what you meant |
+| `/pdsx:experimental-spaces` | working with permissioned data (`com.atproto.space.*`) — experimental, and served by almost no PDS |
+
+they load on demand, so installing all three costs nothing until one is relevant.
+
+### MCP tools or the CLI?
+
+the MCP server covers ordinary record CRUD with structured output. reach for the
+CLI when you need something it doesn't expose:
+
+| you want | use |
+|----------|-----|
+| read / create / update / delete one record | MCP tools |
+| arbitrary read-only XRPC | MCP `query` tool |
+| batch operations over JSONL, with concurrency | CLI — `create`/`update`/`rm` reading stdin |
+| blob upload | CLI — `upload-blob` |
+| permissioned data | CLI — `pdsx spaces …`, no MCP equivalent |
+
+### two things that surprise people
+
+**reads always need a target.** `-r/--repo` is required even when you're
+authenticated — credentials decide what you can see, never where the read goes.
+
+```bash
+pdsx -r you.bsky.social ls app.bsky.feed.post    # your own repo, explicitly
+```
+
+**`ls` returns one page.** default limit is 50 and it does not follow cursors, so
+a collection with 200 records answers with 50 and a cursor on stderr. sort one
+page and you'll draw confident, wrong conclusions about "the latest" of anything.
+
+```bash
+pdsx -r zzstoatzz.io ls app.bsky.feed.post -o json | jq '.[].uri'
+# stderr: next page cursor: 3mrgybvq4w22y
+```
+
+### already using protopack?
+
+[protopack](https://tangled.org/zzstoatzz.io/protopack) bundles the pdsx MCP
+server alongside the Microcosm services. installing both is fine — the server
+registers once, not twice, and you get protopack's skills plus these three.
+
+that pairing is worth having: protopack's `constellation` skill answers "who
+interacted with this record" through the global backlink index, which is far
+better than paginating someone's posts to find replies.
 
 ## MCP server
 

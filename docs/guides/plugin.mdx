@@ -1,0 +1,86 @@
+---
+title: "agent plugin"
+description: "install pdsx into claude code or codex, with skills"
+---
+
+pdsx ships as a plugin for Claude Code and Codex. Installing it registers the
+hosted MCP server **and** a set of skills in one step — the server gives an agent
+the tools, the skills teach it the parts that are easy to get wrong.
+
+Nothing runs locally: the bundled MCP server is hosted.
+
+## install
+
+<CodeGroup>
+
+```bash claude code
+/plugin marketplace add https://github.com/zzstoatzz/pdsx
+/plugin install pdsx
+```
+
+```bash codex
+codex plugin marketplace add https://github.com/zzstoatzz/pdsx
+codex plugin add pdsx@pdsx
+```
+
+```bash from a clone
+claude --plugin-dir .
+```
+
+</CodeGroup>
+
+## what you get
+
+Three skills, loaded on demand — installing all of them costs no context until
+one becomes relevant.
+
+| skill | reach for it when |
+|-------|-------------------|
+| `reading-records` | inspecting what an account published, pulling records out of a PDS, fetching blob content, exploring an unfamiliar lexicon |
+| `writing-records` | creating, updating or deleting records, uploading blobs, batch operations, verifying a write did what you meant |
+| `experimental-spaces` | working with permissioned data (`com.atproto.space.*`) |
+
+Plus the eight MCP tools described in [MCP server](/guides/mcp-server).
+
+## MCP tools or the CLI?
+
+The MCP server covers ordinary record CRUD with structured output. The CLI covers
+everything else.
+
+| you want | use |
+|----------|-----|
+| read / create / update / delete one record | MCP tools |
+| arbitrary read-only XRPC | MCP `query` tool |
+| batch operations over JSONL, with concurrency | CLI reading stdin |
+| blob upload | CLI `upload-blob` |
+| permissioned data | CLI `pdsx spaces …` |
+
+<Note>
+Permissioned data is CLI only. There are no MCP tools for `com.atproto.space.*`
+while the proposal is still experimental.
+</Note>
+
+## authentication
+
+The skills assume credentials come from the environment for CLI use:
+
+```bash
+export ATPROTO_HANDLE=you.bsky.social ATPROTO_PASSWORD=xxxx-xxxx
+```
+
+For the MCP server, credentials are passed as headers — see
+[MCP server](/guides/mcp-server). Self-hosted accounts need no extra
+configuration; the PDS is resolved from your handle.
+
+## using it with protopack
+
+[protopack](https://tangled.org/zzstoatzz.io/protopack) bundles the pdsx MCP
+server alongside the Microcosm services. Installing both is fine — identical
+server configs are deduped, so the tools register once, not twice.
+
+Verified with both plugins loaded: eight pdsx tools total, one copy of each.
+
+The pairing is worth having. protopack's `constellation` skill answers "who
+interacted with this record" through the global backlink index — far better than
+paginating an account's posts to find replies, which is what you'd otherwise
+reach for.
