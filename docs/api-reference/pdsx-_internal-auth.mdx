@@ -10,10 +10,10 @@ authentication utilities for atproto.
 
 ## Functions
 
-### `_login` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/auth.py#L23" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `login_with_session_fallback` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/auth.py#L23" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
-_login(client: AsyncClient, handle: str, password: str) -> None
+login_with_session_fallback(client: AsyncClient, handle: str, password: str) -> None
 ```
 
 
@@ -30,7 +30,7 @@ session already carries. A non-existent session means createSession itself
 failed (bad credentials), which must still raise.
 
 
-### `login` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/auth.py#L47" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `login` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/auth.py#L49" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 login(client: AsyncClient, handle: str | None = None, password: str | None = None) -> bool

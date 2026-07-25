@@ -20,7 +20,9 @@ console = Console()
 logging.getLogger("httpx").setLevel(logging.CRITICAL)
 
 
-async def _login(client: AsyncClient, handle: str, password: str) -> None:
+async def login_with_session_fallback(
+    client: AsyncClient, handle: str, password: str
+) -> None:
     """log in, tolerating PDSes that do not proxy AppView methods.
 
     ``AsyncClient.login`` establishes the session and then populates
@@ -80,9 +82,9 @@ async def login(
             transient=True,
         ) as progress:
             progress.add_task("authenticating...", total=None)
-            await _login(client, handle, password)
+            await login_with_session_fallback(client, handle, password)
         console.print(f"[dim]✓ authenticated as[/dim] {handle}\n")
     else:
-        await _login(client, handle, password)
+        await login_with_session_fallback(client, handle, password)
 
     return True
