@@ -29,8 +29,6 @@ dependencies = [
     "pydantic-settings>=2.7.0",
     "pyyaml>=6.0.3",
     "rich>=13.0.0",
-    "fastmcp==4.0.0a1",
-    "typing-extensions>=4.12",
 ]
 
 [project.optional-dependencies]

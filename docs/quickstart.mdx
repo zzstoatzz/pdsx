@@ -7,13 +7,13 @@ description: "get up and running with pdsx in 5 minutes"
 
 ```bash
 # use with uvx (no install)
-uvx --prerelease=allow pdsx --help
+uvx pdsx --help
 
 # or install with uv
-uv add --prerelease=allow pdsx
+uv add pdsx
 
 # or install with pip
-pip install --pre pdsx
+pip install pdsx
 ```
 
 <Warning>
@@ -25,11 +25,6 @@ last release published before that pin. Check with `pdsx --version` if something
 seems missing.
 
 To make it persistent in a project:
-
-```toml
-[tool.uv]
-prerelease = "allow"
-```
 
 This requirement goes away when fastmcp 4.0 ships stable.
 </Warning>

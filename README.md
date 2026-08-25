@@ -7,26 +7,13 @@ general-purpose cli for atproto record operations
 ## installation
 
 ```bash
-uv add --prerelease=allow pdsx
+uv add pdsx
 # or run directly
-uvx --prerelease=allow pdsx --help
+uvx pdsx --help
 # or from GitHub (latest)
-uvx --prerelease=allow --from git+https://github.com/zzstoatzz/pdsx pdsx --help
+uvx --from git+https://github.com/zzstoatzz/pdsx pdsx --help
 ```
 
-> **`--prerelease=allow` is required.** pdsx depends on `fastmcp==4.0.0a1`, and
-> resolvers skip pre-releases unless asked. Without the flag you don't get an
-> error — you silently get **0.1.5**, the last release published before that
-> pin, missing everything since.
->
-> To make it stick in a project, put this in your `pyproject.toml`:
->
-> ```toml
-> [tool.uv]
-> prerelease = "allow"
-> ```
->
-> This goes away when fastmcp 4.0 ships stable.
 
 ## quick start
 

@@ -1,0 +1,4 @@
+# what the hosted MCP server needs. the horizon/fastmcp-cloud project must
+# point its dependencyPath here — the CLI package itself does not depend on
+# fastmcp (see #91 for the wrong turn this replaces).
+.[mcp]
