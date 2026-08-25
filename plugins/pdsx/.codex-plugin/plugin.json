@@ -1,6 +1,6 @@
 {
   "name": "pdsx",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "AT Protocol record operations — read and write any repo's records from the CLI or as MCP tools.",
   "author": {
     "name": "zzstoatzz",
