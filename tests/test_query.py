@@ -1,5 +1,6 @@
 """tests for the read-only XRPC `query` tool and its guards."""
 
+import json
 from typing import ClassVar
 
 import pytest
@@ -369,3 +370,83 @@ async def test_query_tool_authenticated_uses_caller_pds_and_jwt(monkeypatch):
             "auth_token": "jwt-from-session",
         }
     ]
+
+
+async def test_query_select_projects_with_jq(monkeypatch):
+    posts = {
+        "posts": [
+            {
+                "uri": "at://a/1",
+                "author": {"handle": "a.test"},
+                "record": {"text": "one"},
+                "embed": {"big": "x" * 500},
+            },
+            {
+                "uri": "at://b/2",
+                "author": {"handle": "b.test"},
+                "record": {"text": "two"},
+            },
+        ]
+    }
+
+    async def fake_query(nsid, base_url, params, auth_token=None):
+        return posts
+
+    monkeypatch.setattr(server, "_query", fake_query)
+    fn = getattr(server.query, "fn", server.query)
+    out = await fn(
+        "app.bsky.feed.getPosts",
+        params={"uris": ["at://a/1", "at://b/2"]},
+        select=".posts[] | {uri, handle: .author.handle, text: .record.text}",
+    )
+    assert out == [
+        {"uri": "at://a/1", "handle": "a.test", "text": "one"},
+        {"uri": "at://b/2", "handle": "b.test", "text": "two"},
+    ]
+    single = await fn("app.bsky.feed.getPosts", params={}, select=".posts | length")
+    assert single == [2]
+    bad = await fn("app.bsky.feed.getPosts", params={}, select=".posts[")
+    assert bad["error"] == "bad_select"
+
+
+def test_truncate_query_response_cuts_a_bare_list_and_marks_it():
+    items = [{"text": "x" * 1000} for _ in range(60)]
+    out = server._truncate_query_response(items)
+    assert out[-1]["truncated"] is True and out[-1]["of"] == 60
+    assert len(json.dumps(out)) <= server.MAX_RESPONSE_CHARS + 200
+
+
+async def test_list_records_select_projects_and_returns_cursor(monkeypatch):
+    class Rec:
+        def __init__(self, i):
+            self.uri = f"at://did:plc:me/app.bsky.feed.like/{i}"
+            self.cid = "cid"
+            self.value = {
+                "subject": {"uri": f"at://x/post/{i}", "cid": "c"},
+                "createdAt": "2026-09-03T00:00:00Z",
+            }
+
+    class Resp:
+        records: ClassVar[list[Rec]] = [Rec(1), Rec(2)]
+        cursor = "2"
+
+    async def fake_list(client, collection, limit, repo=None, cursor=None):
+        return Resp()
+
+    class FakeClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+    monkeypatch.setattr(server, "_list_records", fake_list)
+    monkeypatch.setattr(server, "get_atproto_client", lambda **kw: FakeClient())
+    fn = getattr(server.list_records, "fn", server.list_records)
+    out = await fn(
+        "app.bsky.feed.like",
+        limit=100,
+        repo="zzstoatzz.io",
+        select=".[] | .value.subject.uri",
+    )
+    assert out == {"results": ["at://x/post/1", "at://x/post/2"], "cursor": "2"}

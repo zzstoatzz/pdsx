@@ -333,7 +333,7 @@ class TestContextFloodingProtection:
 
     def test_max_limit_constant_exists(self):
         """MAX_LIMIT constant is defined."""
-        assert MAX_LIMIT == 25
+        assert MAX_LIMIT == 100
 
     def test_max_response_chars_constant_exists(self):
         """MAX_RESPONSE_CHARS constant is defined."""
