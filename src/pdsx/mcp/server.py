@@ -4,6 +4,7 @@ import json
 from typing import Any
 
 import httpx
+import jq  # type: ignore[unresolved-import]  # c extension, no stubs
 from fastmcp import FastMCP
 
 from pdsx._internal.operations import (
@@ -49,11 +50,15 @@ from pdsx.mcp.client import (
 from pdsx.mcp.middleware import AtprotoAuthMiddleware
 
 # response size limits to prevent context flooding in LLM clients
-MAX_LIMIT = 25  # max records per request (can paginate for more)
+MAX_LIMIT = 100  # the PDS's own listRecords ceiling; paginate for more
 MAX_RESPONSE_CHARS = 30000  # truncate responses larger than this
 
 # default target for app.bsky.* read queries that aren't tied to a single PDS
-PUBLIC_APPVIEW = "https://public.api.bsky.app"
+# api.bsky.app, not public.api.bsky.app: the public host answers 502 (an html
+# error page) to any getPosts batch that names a deleted post, measured
+# 2026-09-03 on 27 of 56 batches over two weeks of likes. api.bsky.app serves
+# the same public getters unauthenticated and omits the missing post instead.
+PUBLIC_APPVIEW = "https://api.bsky.app"
 
 # explicit allowlist for `query(..., authenticated=True)`. authenticated reads
 # can expose private data (DMs via `chat.bsky.convo.*`, prefs, etc.), so the
@@ -180,17 +185,29 @@ def _truncate_list_response(
     }
 
 
-def _truncate_query_response(result: dict[str, Any]) -> dict[str, Any]:
+def _truncate_query_response(result: Any) -> Any:
     """trim an oversized query response so it doesn't flood the client context.
 
     trims the largest list-valued field (e.g. listRepos' 'repos') until the
-    serialized response fits, and annotates what was dropped.
+    serialized response fits, and annotates what was dropped. a bare list
+    (a `select` result) is cut to fit and gets a trailing marker.
     """
     try:
         if len(json.dumps(result, default=str)) <= MAX_RESPONSE_CHARS:
             return result
     except (TypeError, ValueError):
         return result
+
+    if isinstance(result, list):
+        items = list(result)
+        while items and len(json.dumps(items, default=str)) > MAX_RESPONSE_CHARS:
+            items.pop()
+        return [*items, {"truncated": True, "kept": len(items), "of": len(result)}]
+    if not isinstance(result, dict):
+        return {
+            "truncated": True,
+            "message": f"response exceeded {MAX_RESPONSE_CHARS} chars",
+        }
 
     list_keys = [k for k, v in result.items() if isinstance(v, list)]
     if not list_keys:
@@ -331,8 +348,15 @@ async def list_records(
     limit: int = 10,
     repo: str | None = None,
     cursor: str | None = None,
+    select: str | None = None,
 ) -> list[RecordResponse] | dict[str, Any]:
     """list records in a collection.
+
+    `select` is a jq expression over the list of {uri, cid, value} records;
+    with it the response is {"results": [...], "cursor": ...}. 100 like
+    records are ~44k chars and get trimmed, but
+    ``select=".[] | .value.subject.uri"`` is ~7k — project, then page with
+    the returned cursor.
 
     examples:
     - list_records("app.bsky.feed.post", repo="zzstoatzz.io") - list someone's posts
@@ -340,7 +364,7 @@ async def list_records(
 
     args:
         collection: the collection to list (e.g., 'app.bsky.feed.post')
-        limit: max records to return (default 10, max 25)
+        limit: max records to return (default 10, max 100)
         repo: handle or DID to read from (required)
         cursor: pagination cursor from previous response
 
@@ -368,6 +392,17 @@ async def list_records(
             RecordResponse(uri=r.uri, cid=r.cid, value=_clean_value(r.value))
             for r in response.records
         ]
+        if select:
+            try:
+                selected = (
+                    jq.compile(select).input_value([dict(r) for r in records]).all()
+                )
+            except ValueError as exc:
+                return {"error": "bad_select", "message": f"jq: {exc}"}
+            return {
+                "results": _truncate_query_response(selected),
+                "cursor": response.cursor,
+            }
         return _truncate_list_response(
             records,
             total_fetched=len(records),
@@ -457,8 +492,15 @@ async def query(
     host: str | None = None,
     repo: str | None = None,
     authenticated: bool = False,
-) -> dict[str, Any]:
+    select: str | None = None,
+) -> dict[str, Any] | list[Any]:
     """call a read-only XRPC *query* method (HTTP GET).
+
+    `select` is a jq expression applied to the response before it is
+    returned, and is how a big getter stays readable: app.bsky.feed.getPosts
+    with 25 uris is ~55k chars of post views, but
+    ``select=".posts[] | {uri, handle: .author.handle, text: .record.text}"``
+    is ~6k. anything over 30k chars is trimmed, so project before you page.
 
     this is the read counterpart the record tools don't cover — sync, identity,
     server, and the app.bsky.* getter family. it is GET-only and structurally
@@ -575,6 +617,16 @@ async def query(
                 "use a method-specific tool instead of `query`."
             ),
         }
+    if select:
+        try:
+            selected = jq.compile(select).input_value(result).all()
+        except ValueError as exc:
+            return {"error": "bad_select", "message": f"jq: {exc}"}
+        return _truncate_query_response(
+            selected[0]
+            if len(selected) == 1 and isinstance(selected[0], dict)
+            else selected
+        )
     return _truncate_query_response(result)
 
 

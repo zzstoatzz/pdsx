@@ -26,6 +26,7 @@ classifiers = [
 dependencies = [
     "atproto>=0.0.63",
     "fastmcp>=4.0.0a1",
+    "jq>=1.8",
     "httpx>=0.27",
     "pydantic-settings>=2.7.0",
     "pyyaml>=6.0.3",
