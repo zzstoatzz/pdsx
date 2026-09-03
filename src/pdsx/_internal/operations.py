@@ -230,12 +230,17 @@ async def update_record(
         }
     )
 
-    # merge
+    # merge. a known lexicon comes back as a model whose unset optional
+    # fields are None; putting those back verbatim fails validation
+    # ("Expected array value type (got null) at $.record.entities"), so
+    # the base is the record as it exists, not the model's full shape.
     if isinstance(current.value, dict):
-        updated_value = {**current.value, **updates}
+        base: dict[str, Any] = dict(current.value)
     else:
-        updated_value = dict(current.value)
-        updated_value.update(updates)
+        from atproto_client.models.utils import get_model_as_dict
+
+        base = get_model_as_dict(current.value)
+    updated_value = {**base, **updates}
 
     # put
     return await client.com.atproto.repo.put_record(
