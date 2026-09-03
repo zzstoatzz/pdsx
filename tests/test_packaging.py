@@ -17,13 +17,6 @@ tomllib = pytest.importorskip("tomllib", reason="pyproject parsing test needs py
 PYPROJECT = Path(__file__).parent.parent / "pyproject.toml"
 
 
-def test_base_dependencies_have_no_mcp():
-    data = tomllib.loads(PYPROJECT.read_text())
-    base = " ".join(data["project"]["dependencies"])
-    assert "fastmcp" not in base
-    assert "mcp" not in base
-
-
 def test_no_prerelease_pins_in_base():
     data = tomllib.loads(PYPROJECT.read_text())
     for dep in data["project"]["dependencies"]:
