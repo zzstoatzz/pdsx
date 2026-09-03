@@ -82,6 +82,33 @@ class TestGetRecord:
         assert call_args["collection"] == "app.bsky.actor.profile"
         assert call_args["rkey"] == "self"
 
+    async def test_model_value_merges_without_unset_fields(
+        self, mock_client: AsyncClient
+    ) -> None:
+        """a post read back as a model carries entities=None, langs=None,
+        ...; the PDS rejects those as null. only set fields are put back."""
+        post = models.AppBskyFeedPost.Record(
+            text="old", created_at="2026-09-02T00:00:00Z"
+        )
+        mock_client.com.atproto.repo.get_record = AsyncMock(  # type: ignore[attr-defined]
+            return_value=MagicMock(value=post)
+        )
+        mock_client.com.atproto.repo.put_record = AsyncMock(  # type: ignore[attr-defined]
+            return_value=models.ComAtprotoRepoPutRecord.Response(
+                uri="at://did:plc:test123/app.bsky.feed.post/3abc", cid="c"
+            )
+        )
+
+        await update_record(
+            mock_client, "at://did:plc:test123/app.bsky.feed.post/3abc", {"text": "new"}
+        )
+
+        record = mock_client.com.atproto.repo.put_record.call_args[0][0]["record"]
+        assert record["text"] == "new"
+        assert record["createdAt"] == "2026-09-02T00:00:00Z"
+        assert "entities" not in record
+        assert None not in record.values()
+
     async def test_shorthand_uri_without_auth_fails(
         self, mock_client_no_auth: AsyncClient
     ) -> None:
@@ -150,6 +177,33 @@ class TestUpdateRecord:
         assert call_args["collection"] == "app.bsky.actor.profile"
         assert call_args["rkey"] == "self"
 
+    async def test_model_value_merges_without_unset_fields(
+        self, mock_client: AsyncClient
+    ) -> None:
+        """a post read back as a model carries entities=None, langs=None,
+        ...; the PDS rejects those as null. only set fields are put back."""
+        post = models.AppBskyFeedPost.Record(
+            text="old", created_at="2026-09-02T00:00:00Z"
+        )
+        mock_client.com.atproto.repo.get_record = AsyncMock(  # type: ignore[attr-defined]
+            return_value=MagicMock(value=post)
+        )
+        mock_client.com.atproto.repo.put_record = AsyncMock(  # type: ignore[attr-defined]
+            return_value=models.ComAtprotoRepoPutRecord.Response(
+                uri="at://did:plc:test123/app.bsky.feed.post/3abc", cid="c"
+            )
+        )
+
+        await update_record(
+            mock_client, "at://did:plc:test123/app.bsky.feed.post/3abc", {"text": "new"}
+        )
+
+        record = mock_client.com.atproto.repo.put_record.call_args[0][0]["record"]
+        assert record["text"] == "new"
+        assert record["createdAt"] == "2026-09-02T00:00:00Z"
+        assert "entities" not in record
+        assert None not in record.values()
+
     async def test_shorthand_uri_without_auth_fails(
         self, mock_client_no_auth: AsyncClient
     ) -> None:
@@ -206,6 +260,33 @@ class TestDeleteRecord:
         assert call_args["repo"] == "did:plc:test123"
         assert call_args["collection"] == "app.bsky.feed.post"
         assert call_args["rkey"] == "abc123"
+
+    async def test_model_value_merges_without_unset_fields(
+        self, mock_client: AsyncClient
+    ) -> None:
+        """a post read back as a model carries entities=None, langs=None,
+        ...; the PDS rejects those as null. only set fields are put back."""
+        post = models.AppBskyFeedPost.Record(
+            text="old", created_at="2026-09-02T00:00:00Z"
+        )
+        mock_client.com.atproto.repo.get_record = AsyncMock(  # type: ignore[attr-defined]
+            return_value=MagicMock(value=post)
+        )
+        mock_client.com.atproto.repo.put_record = AsyncMock(  # type: ignore[attr-defined]
+            return_value=models.ComAtprotoRepoPutRecord.Response(
+                uri="at://did:plc:test123/app.bsky.feed.post/3abc", cid="c"
+            )
+        )
+
+        await update_record(
+            mock_client, "at://did:plc:test123/app.bsky.feed.post/3abc", {"text": "new"}
+        )
+
+        record = mock_client.com.atproto.repo.put_record.call_args[0][0]["record"]
+        assert record["text"] == "new"
+        assert record["createdAt"] == "2026-09-02T00:00:00Z"
+        assert "entities" not in record
+        assert None not in record.values()
 
     async def test_shorthand_uri_without_auth_fails(
         self, mock_client_no_auth: AsyncClient

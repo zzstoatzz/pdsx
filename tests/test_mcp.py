@@ -156,10 +156,14 @@ class TestGetAtprotoClient:
         async with get_atproto_client(target_repo="zzstoatzz.io") as client:
             assert "pds.zzstoatzz.io" in client._base_url
 
-    async def test_pds_discovery_standard_user(self):
+    async def test_pds_discovery_standard_user(self, mocker):
         """uses bsky network PDS for standard users."""
         from pdsx.mcp.client import get_atproto_client
 
+        mocker.patch(
+            "pdsx._internal.resolution.discover_pds",
+            AsyncMock(return_value="https://morel.us-east.host.bsky.network"),
+        )
         async with get_atproto_client(target_repo="jay.bsky.team") as client:
             assert "bsky.network" in client._base_url
 
@@ -199,14 +203,22 @@ class TestGetAtprotoClient:
             assert "pds.zzstoatzz.io" in client._base_url
         login.assert_awaited_once()
 
-    async def test_skips_auth_when_reading_other_pds(self, monkeypatch):
-        """doesn't try to authenticate when reading from another user's PDS."""
+    async def test_skips_auth_when_reading_other_pds(self, monkeypatch, mocker):
+        """doesn't try to authenticate when reading from another user's PDS.
+
+        discovery is mocked: resolving a real handle through plc.directory
+        from CI timed out on 2026-09-02 and failed the run for a reason
+        unrelated to what this test checks."""
 
         from pdsx.mcp.client import get_atproto_client
 
         # simulate having credentials configured (like via headers)
         monkeypatch.setenv("ATPROTO_HANDLE", "someone.bsky.social")
         monkeypatch.setenv("ATPROTO_PASSWORD", "fake-password")
+        mocker.patch(
+            "pdsx._internal.resolution.discover_pds",
+            AsyncMock(return_value="https://pds.zzstoatzz.io"),
+        )
 
         # should discover zzstoatzz.io's PDS and NOT try to login
         # (because our bsky.social credentials won't work on their PDS)
