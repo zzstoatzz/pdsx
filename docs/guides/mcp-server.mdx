@@ -126,6 +126,19 @@ get_record(uri="at://did:plc:.../app.bsky.feed.post/abc123")
 
 without a `repo` parameter, the server reads from your authenticated account.
 
+`list_records` returns `{results: [...], cursor: ...}` with or without `select`.
+Pass the returned cursor unchanged to read the next page; `null` marks the end
+of a successful traversal. A jq filter can return no matches while the cursor
+still points to another page.
+
+Pages exceeding the response size limit return `error: "response_too_large"`
+and `retry_cursor` instead of partial results. Reduce `limit` or narrow `select`
+and retry with that cursor. No continuation cursor is returned for an oversized
+page, so unseen records cannot be silently skipped by advancing past it.
+
+The MCP read tools simplify record values. In post records, `value.reply.parent`
+and `value.reply.root` are URI strings, not the original `{uri, cid}` objects.
+
 ### write operations
 
 write operations always require authentication:

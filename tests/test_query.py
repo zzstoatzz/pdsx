@@ -1,6 +1,7 @@
 """tests for the read-only XRPC `query` tool and its guards."""
 
 import json
+from types import SimpleNamespace
 from typing import ClassVar
 
 import pytest
@@ -450,3 +451,62 @@ async def test_list_records_select_projects_and_returns_cursor(monkeypatch):
         select=".[] | .value.subject.uri",
     )
     assert out == {"results": ["at://x/post/1", "at://x/post/2"], "cursor": "2"}
+
+
+@pytest.mark.parametrize("select", [None, ".[]"])
+async def test_list_records_oversized_page_can_retry_without_losing_records(
+    monkeypatch, select
+):
+    records = [
+        SimpleNamespace(
+            uri=f"at://did:plc:me/app.bsky.feed.post/{i}",
+            cid=f"cid{i}",
+            value={
+                "text": "x" * 12000,
+                "reply": {"parent": {"uri": "at://x/post/parent", "cid": "p"}},
+            },
+        )
+        for i in range(3)
+    ]
+    calls = []
+
+    async def fake_list(client, collection, limit, repo=None, cursor=None):
+        calls.append((limit, cursor))
+        start = {None: 0, "opaque-next": 2}[cursor]
+        page = records[start : start + limit]
+        return SimpleNamespace(
+            records=page, cursor="opaque-next" if start + len(page) < 3 else None
+        )
+
+    class FakeClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+    monkeypatch.setattr(server, "_list_records", fake_list)
+    monkeypatch.setattr(server, "get_atproto_client", lambda **kw: FakeClient())
+    fn = getattr(server.list_records, "fn", server.list_records)
+    failed = await fn("app.bsky.feed.post", limit=3, repo="me.test", select=select)
+    assert failed["error"] == "response_too_large"
+    first = await fn(
+        "app.bsky.feed.post",
+        limit=2,
+        repo="me.test",
+        select=select,
+        cursor=failed["retry_cursor"],
+    )
+    second = await fn(
+        "app.bsky.feed.post",
+        limit=2,
+        repo="me.test",
+        select=select,
+        cursor=first["cursor"],
+    )
+    assert [r["uri"] for r in first["results"] + second["results"]] == [
+        r.uri for r in records
+    ]
+    assert first["results"][0]["value"]["reply"]["parent"] == "at://x/post/parent"
+    assert second["cursor"] is None
+    assert calls == [(3, None), (2, None), (2, "opaque-next")]

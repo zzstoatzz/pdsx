@@ -18,7 +18,7 @@ from pdsx.mcp.server import (
     MAX_LIMIT,
     MAX_RESPONSE_CHARS,
     _clean_value,
-    _truncate_list_response,
+    _record_page_response,
 )
 
 
@@ -339,66 +339,31 @@ class TestContextFloodingProtection:
         """MAX_RESPONSE_CHARS constant is defined."""
         assert MAX_RESPONSE_CHARS == 30000
 
-    def test_truncate_response_small_response_unchanged(self):
-        """small responses pass through unchanged."""
-        records = [
-            RecordResponse(uri="at://test/post/1", cid="cid1", value={"text": "hi"}),
-            RecordResponse(uri="at://test/post/2", cid="cid2", value={"text": "hello"}),
-        ]
-        result = _truncate_list_response(records, total_fetched=2, has_more=False)
+    def test_complete_page_retains_the_real_cursor(self):
+        records = [{"uri": "at://test/post/one", "value": {"text": "hi"}}]
+        assert _record_page_response(records, "opaque-next", "opaque-current") == {
+            "results": records,
+            "cursor": "opaque-next",
+        }
+        assert _record_page_response([], None, "opaque-current") == {
+            "results": [],
+            "cursor": None,
+        }
 
-        # should return the original list unchanged
-        assert result == records
+    def test_oversized_page_requires_retry_instead_of_skipping_omitted_records(self):
+        records = [{"text": "x" * MAX_RESPONSE_CHARS}]
+        for next_cursor in [None, "opaque-next"]:
+            result = _record_page_response(records, next_cursor, "opaque-current")
+            assert result["error"] == "response_too_large"
+            assert result["retry_cursor"] == "opaque-current"
+            assert "cursor" not in result
+            assert "results" not in result
+            assert len(json.dumps(result)) < MAX_RESPONSE_CHARS
 
-    def test_truncate_response_large_response_truncated(self):
-        """large responses are truncated with a message."""
-        # create records that exceed the limit
-        large_text = "x" * 2000  # 2KB per record
-        records = [
-            RecordResponse(
-                uri=f"at://test/post/{i}",
-                cid=f"cid{i}",
-                value={"text": f"{large_text}_{i}"},
-            )
-            for i in range(50)  # ~100KB total
-        ]
-        result = _truncate_list_response(records, total_fetched=50, has_more=True)
-
-        # should be a dict with truncated records
-        assert isinstance(result, dict)
-        assert "records" in result
-        assert "truncated" in result
-        assert result["truncated"] is True
-        assert "message" in result
-        assert "shown" in result
-        assert "fetched" in result
-
-        # truncated list should be smaller
-        assert len(result["records"]) < 50
-
-        # serialized should be under limit
-        serialized = json.dumps(result["records"], default=str)
-        assert len(serialized) <= MAX_RESPONSE_CHARS
-
-        # message should mention pagination
-        assert "cursor" in result["message"]
-
-    def test_truncate_response_no_more_available(self):
-        """truncation message differs when no more records available."""
-        large_text = "x" * 2000
-        records = [
-            RecordResponse(
-                uri=f"at://test/post/{i}",
-                cid=f"cid{i}",
-                value={"text": f"{large_text}_{i}"},
-            )
-            for i in range(50)
-        ]
-        result = _truncate_list_response(records, total_fetched=50, has_more=False)
-
-        assert isinstance(result, dict)
-        # message should NOT mention cursor when no more available
-        assert "more available via cursor" not in result["message"]
+    def test_oversized_first_page_retries_without_a_cursor(self):
+        result = _record_page_response(["x" * MAX_RESPONSE_CHARS], "next", None)
+        assert result["error"] == "response_too_large"
+        assert result["retry_cursor"] is None
 
 
 class _FakeAsyncContext:

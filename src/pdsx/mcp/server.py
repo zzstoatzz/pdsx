@@ -148,40 +148,17 @@ def _clean_value(value: Any) -> dict[str, Any]:
     return result
 
 
-def _truncate_list_response(
-    records: list[RecordResponse],
-    total_fetched: int,
-    has_more: bool,
-) -> list[RecordResponse] | dict[str, Any]:
-    """truncate list response if it exceeds size limits.
-
-    returns either the original list or a dict with truncated results and a message.
-    """
-    # serialize to check size
-    try:
-        response_json = json.dumps(records, default=str)
-    except (TypeError, ValueError):
-        return records
-
-    if len(response_json) <= MAX_RESPONSE_CHARS:
-        return records
-
-    # truncate by removing records until under limit
-    truncated = list(records)
-    while truncated and len(json.dumps(truncated, default=str)) > MAX_RESPONSE_CHARS:
-        truncated.pop()
-
-    shown = len(truncated)
-    msg = f"response truncated: showing {shown} of {total_fetched} records"
-    if has_more:
-        msg += " (more available via cursor)"
-
+def _record_page_response(
+    results: list[Any], cursor: str | None, retry_cursor: str | None
+) -> dict[str, Any]:
+    """Return a complete page or a retryable size error; never skip records."""
+    response = {"results": results, "cursor": cursor}
+    if len(json.dumps(response, default=str)) <= MAX_RESPONSE_CHARS:
+        return response
     return {
-        "records": truncated,
-        "truncated": True,
-        "message": msg,
-        "shown": shown,
-        "fetched": total_fetched,
+        "error": "response_too_large",
+        "message": "Reduce limit or narrow select, then retry the same page.",
+        "retry_cursor": retry_cursor,
     }
 
 
@@ -349,14 +326,15 @@ async def list_records(
     repo: str | None = None,
     cursor: str | None = None,
     select: str | None = None,
-) -> list[RecordResponse] | dict[str, Any]:
+) -> dict[str, Any]:
     """list records in a collection.
 
     `select` is a jq expression over the list of {uri, cid, value} records;
-    with it the response is {"results": [...], "cursor": ...}. 100 like
-    records are ~44k chars and get trimmed, but
-    ``select=".[] | .value.subject.uri"`` is ~7k — project, then page with
-    the returned cursor.
+    the response is always {"results": [...], "cursor": ...}. Values are
+    simplified: reply.parent and reply.root are URI strings. Use a narrow
+    projection such as ``select=".[] | .value.subject.uri"`` for like records.
+    Oversized pages return response_too_large with retry_cursor: reduce limit
+    or narrow select and retry that page. Successful pages omit no records.
 
     examples:
     - list_records("app.bsky.feed.post", repo="zzstoatzz.io") - list someone's posts
@@ -369,7 +347,7 @@ async def list_records(
         cursor: pagination cursor from previous response
 
     returns:
-        list of records with uri, cid, and value fields
+        results and the PDS cursor, or an explicit error requiring a retry
     """
     # cap limit to prevent context flooding
     effective_limit = min(limit, MAX_LIMIT)
@@ -399,14 +377,9 @@ async def list_records(
                 )
             except ValueError as exc:
                 return {"error": "bad_select", "message": f"jq: {exc}"}
-            return {
-                "results": _truncate_query_response(selected),
-                "cursor": response.cursor,
-            }
-        return _truncate_list_response(
-            records,
-            total_fetched=len(records),
-            has_more=response.cursor is not None,
+            return _record_page_response(selected, response.cursor, cursor)
+        return _record_page_response(
+            [dict(record) for record in records], response.cursor, cursor
         )
 
 
