@@ -1,9 +1,11 @@
 """tests for pdsx MCP server."""
 
 import json
+from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
+from atproto import models
 
 from pdsx.mcp._types import (
     CreateResponse,
@@ -19,6 +21,7 @@ from pdsx.mcp.server import (
     MAX_RESPONSE_CHARS,
     _clean_value,
     _record_page_response,
+    get_record,
 )
 
 
@@ -543,3 +546,27 @@ class TestHeaderFallback:
 
         assert creds["handle"] == "state.bsky.social"
         assert creds["password"] == "state-pw"
+
+
+@pytest.mark.parametrize("kind", ["post", "reply", "custom"])
+async def test_get_record_preserves_source_structure(mocker, kind):
+    """A source read must not present extracted links as the stored schema."""
+    raw = json.loads(
+        (Path(__file__).parent / "fixtures" / "poll-record.json").read_text()
+    )
+    if kind == "reply":
+        ref = {"uri": raw["uri"], "cid": raw["cid"]}
+        raw["value"]["reply"] = {"root": ref, "parent": ref}
+        raw["value"]["labels"] = None
+    elif kind == "custom":
+        raw["value"]["$type"] = "example.test.record"
+        raw["value"]["custom"] = {"empty": None, "items": []}
+    response = models.ComAtprotoRepoGetRecord.Response.model_validate(raw)
+    mocker.patch("pdsx.mcp.server._get_record", AsyncMock(return_value=response))
+    mocker.patch("pdsx.mcp.server.get_atproto_client")
+
+    result = await get_record(raw["uri"], repo="gracekind.net")
+
+    assert result == raw
+    assert "links" not in result["value"]
+    assert result["value"]["facets"][0]["index"] == {"byteStart": 82, "byteEnd": 101}

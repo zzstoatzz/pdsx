@@ -1,0 +1,62 @@
+{
+  "uri": "at://did:plc:p572wxnsuoogcrhlfrlizlrb/app.bsky.feed.post/3mv26mch3vv2z",
+  "cid": "bafyreifcnvvd7d4eu7sbergozqshblonmx22nsngpwnfwdnucj4hdmoalm",
+  "value": {
+    "text": "Is it more dignified to be struck and killed by a human driver than by robotaxi?\n\nYes, more dignified\nNo, less dignified\nBoth alike in dignity\n\nView results",
+    "$type": "app.bsky.feed.post",
+    "langs": [
+      "en"
+    ],
+    "facets": [
+      {
+        "index": {
+          "byteEnd": 101,
+          "byteStart": 82
+        },
+        "features": [
+          {
+            "uri": "https://bsky.app/profile/results.feedpolls.org/feed/poll-8863972491774e0e82600b10bb025c90-opt-0",
+            "$type": "app.bsky.richtext.facet#link"
+          }
+        ]
+      },
+      {
+        "index": {
+          "byteEnd": 120,
+          "byteStart": 102
+        },
+        "features": [
+          {
+            "uri": "https://bsky.app/profile/results.feedpolls.org/feed/poll-8863972491774e0e82600b10bb025c90-opt-1",
+            "$type": "app.bsky.richtext.facet#link"
+          }
+        ]
+      },
+      {
+        "index": {
+          "byteEnd": 142,
+          "byteStart": 121
+        },
+        "features": [
+          {
+            "uri": "https://bsky.app/profile/results.feedpolls.org/feed/poll-8863972491774e0e82600b10bb025c90-opt-2",
+            "$type": "app.bsky.richtext.facet#link"
+          }
+        ]
+      },
+      {
+        "index": {
+          "byteEnd": 156,
+          "byteStart": 144
+        },
+        "features": [
+          {
+            "uri": "https://bsky.app/profile/results.feedpolls.org/post/3mv26mc5fbn27",
+            "$type": "app.bsky.richtext.facet#link"
+          }
+        ]
+      }
+    ],
+    "createdAt": "2026-09-08T23:32:05.014Z"
+  }
+}

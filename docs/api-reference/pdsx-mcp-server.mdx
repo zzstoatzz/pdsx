@@ -81,7 +81,9 @@ list records in a collection.
 
 `select` is a jq expression over the list of {uri, cid, value} records;
 the response is always {"results": [...], "cursor": ...}. Values are
-simplified: reply.parent and reply.root are URI strings. Use a narrow
+simplified: reply refs become URI strings, facets become links/mentions,
+and $type, nulls, and English-only langs are omitted. Use get_record for
+the full stored value. Use a narrow
 projection such as ``select=".[] | .value.subject.uri"`` for like records.
 Oversized pages return response_too_large with retry_cursor: reduce limit
 or narrow select and retry that page. Successful pages omit no records.
@@ -100,7 +102,7 @@ examples:
 - results and the PDS cursor, or an explicit error requiring a retry
 
 
-### `describe_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L387" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `describe_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L389" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 describe_repo(repo: str) -> RepoDescriptionResponse
@@ -122,14 +124,17 @@ examples:
 - dict with handle, did, collections, and handleIsCorrect
 
 
-### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L418" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L420" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 get_record(uri: str, repo: str | None = None) -> RecordResponse
 ```
 
 
-get a specific record by uri.
+get a specific record by uri, preserving its full value.
+
+unlike compact list results, this retains facets, byte ranges, $type,
+language tags, and complete reply references for source inspection.
 
 examples:
 - get_record("at://did:plc:.../app.bsky.feed.post/abc123")
@@ -143,7 +148,7 @@ examples:
 - record with uri, cid, and value fields
 
 
-### `query` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L462" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `query` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L471" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 query(nsid: str, params: dict[str, Any] | None = None, host: str | None = None, repo: str | None = None, authenticated: bool = False, select: str | None = None) -> dict[str, Any] | list[Any]
@@ -202,7 +207,7 @@ allowlist. kept so existing callers don't fail validation.
 - raising — so a bad host guess doesn't burn the caller's retry budget.
 
 
-### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L607" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L616" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 create_record(collection: str, record: dict[str, Any], rkey: str | None = None) -> CreateResponse
@@ -221,7 +226,7 @@ create a new record. requires authentication.
 - dict with uri and cid of created record
 
 
-### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L632" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L641" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 update_record(uri: str, updates: dict[str, Any]) -> UpdateResponse
@@ -240,7 +245,7 @@ fetches the current record, merges your updates, and puts it back.
 - dict with uri and cid of updated record
 
 
-### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L656" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L665" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 delete_record(uri: str) -> DeleteResponse
@@ -260,7 +265,7 @@ examples:
 - confirmation with deleted uri
 
 
-### `whoami` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L682" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `whoami` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L691" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 whoami() -> IdentityResponse
@@ -276,7 +281,7 @@ requires authentication via x-atproto-handle and x-atproto-password headers.
 - dict with handle and did of authenticated user
 
 
-### `me_resource` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L706" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `me_resource` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L715" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 me_resource() -> str
@@ -286,7 +291,7 @@ me_resource() -> str
 current authenticated user identity.
 
 
-### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L722" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L731" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 main() -> None

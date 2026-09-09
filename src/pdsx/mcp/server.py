@@ -331,7 +331,9 @@ async def list_records(
 
     `select` is a jq expression over the list of {uri, cid, value} records;
     the response is always {"results": [...], "cursor": ...}. Values are
-    simplified: reply.parent and reply.root are URI strings. Use a narrow
+    simplified: reply refs become URI strings, facets become links/mentions,
+    and $type, nulls, and English-only langs are omitted. Use get_record for
+    the full stored value. Use a narrow
     projection such as ``select=".[] | .value.subject.uri"`` for like records.
     Oversized pages return response_too_large with retry_cursor: reduce limit
     or narrow select and retry that page. Successful pages omit no records.
@@ -419,7 +421,10 @@ async def get_record(
     uri: str,
     repo: str | None = None,
 ) -> RecordResponse:
-    """get a specific record by uri.
+    """get a specific record by uri, preserving its full value.
+
+    unlike compact list results, this retains facets, byte ranges, $type,
+    language tags, and complete reply references for source inspection.
 
     examples:
     - get_record("at://did:plc:.../app.bsky.feed.post/abc123")
@@ -454,7 +459,11 @@ async def get_record(
     ) as client:
         response = await _get_record(client, uri, repo=repo_to_use)
         return RecordResponse(
-            uri=response.uri, cid=response.cid, value=_clean_value(response.value)
+            uri=response.uri,
+            cid=response.cid,
+            value=response.model_dump(mode="json", by_alias=True, exclude_unset=True)[
+                "value"
+            ],
         )
 
 

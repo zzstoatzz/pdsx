@@ -126,6 +126,12 @@ get_record(uri="at://did:plc:.../app.bsky.feed.post/abc123")
 
 without a `repo` parameter, the server reads from your authenticated account.
 
+`get_record` preserves the full record value, including facet byte ranges,
+`$type`, language tags, and reply CIDs. `list_records` returns compact values:
+facets become links/mentions, reply references become URI strings, and nulls,
+`$type`, and English-only language tags are omitted. Use `get_record` when
+inspecting the stored schema or preparing an edit.
+
 `list_records` returns `{results: [...], cursor: ...}` with or without `select`.
 Pass the returned cursor unchanged to read the next page; `null` marks the end
 of a successful traversal. A jq filter can return no matches while the cursor
