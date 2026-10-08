@@ -146,8 +146,11 @@ async def get_atproto_client(
     creds = await _get_credentials_from_context()
 
     # use context credentials if available, else fall back to env
-    handle = creds["handle"] or os.environ.get("ATPROTO_HANDLE", "")
-    password = creds["password"] or os.environ.get("ATPROTO_PASSWORD", "")
+    if creds["handle"] or creds["password"]:
+        handle, password = creds["handle"], creds["password"]
+    else:
+        handle = os.environ.get("ATPROTO_HANDLE", "")
+        password = os.environ.get("ATPROTO_PASSWORD", "")
 
     # determine PDS URL:
     # 1. if target_repo provided and not requiring auth, discover their PDS
@@ -159,14 +162,9 @@ async def get_atproto_client(
         # discover PDS for the target repo
         from pdsx._internal.resolution import discover_pds
 
-        try:
-            pds_url = await discover_pds(target_repo)
-            logger.debug("discovered PDS for %s: %s", target_repo, pds_url)
-            # don't authenticate when reading from another user's PDS
-            # (our credentials won't work on their PDS)
-            skip_auth = True
-        except ValueError as e:
-            logger.warning("failed to discover PDS for %s: %s", target_repo, e)
+        pds_url = await discover_pds(target_repo)
+        logger.debug("discovered PDS for %s: %s", target_repo, pds_url)
+        skip_auth = True
 
     if not pds_url:
         pds_url = creds["pds_url"] or os.environ.get("ATPROTO_PDS_URL")
@@ -177,10 +175,7 @@ async def get_atproto_client(
         # had the same defect; keep the two paths resolving identically.
         from pdsx._internal.resolution import discover_pds
 
-        try:
-            pds_url = await discover_pds(handle)
-        except ValueError as e:
-            logger.warning("failed to discover PDS for %s: %s", handle, e)
+        pds_url = await discover_pds(handle)
 
     if not pds_url:
         pds_url = "https://bsky.social"
@@ -226,8 +221,12 @@ async def resolve_pds_url() -> str:
     to the AppView.
     """
     creds = await _get_credentials_from_context()
-    return (
-        creds.get("pds_url")
-        or os.environ.get("ATPROTO_PDS_URL")
-        or "https://bsky.social"
-    )
+    configured = creds.get("pds_url") or os.environ.get("ATPROTO_PDS_URL")
+    if configured:
+        return configured
+    handle = creds.get("handle") or os.environ.get("ATPROTO_HANDLE")
+    if handle:
+        from pdsx._internal.resolution import discover_pds
+
+        return await discover_pds(handle)
+    return "https://bsky.social"

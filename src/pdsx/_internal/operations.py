@@ -17,7 +17,7 @@ else:
 if TYPE_CHECKING:
     from atproto import AsyncClient, models
 
-from pdsx._internal.resolution import URIParts, reject_private_host
+from pdsx._internal.resolution import URIParts, reject_private_host, resolve_repo_did
 from pdsx._internal.types import RecordValue
 
 
@@ -110,7 +110,7 @@ async def list_records(
         raise ValueError("no repo specified and not authenticated")
 
     params: dict[str, str | int] = {
-        "repo": target_repo,
+        "repo": await resolve_repo_did(target_repo),
         "collection": collection,
         "limit": limit,
     }
@@ -137,27 +137,13 @@ async def get_record(
         record response
     """
     # determine which DID to use for shorthand URIs
-    did_for_shorthand = None
-    if client.me:
-        did_for_shorthand = client.me.did
-    elif repo:
-        # resolve repo to DID if it's a handle
-        from atproto_identity.resolver import AsyncIdResolver
-
-        resolver = AsyncIdResolver()
-        if repo.startswith("did:"):
-            did_for_shorthand = repo
-        else:
-            resolved = await resolver.handle.resolve(repo)
-            if not resolved:
-                raise ValueError(f"could not resolve handle: {repo}")
-            did_for_shorthand = resolved
+    did_for_shorthand = repo or (client.me.did if client.me else None)
 
     parts = URIParts.from_uri(uri, did_for_shorthand)
 
     return await client.com.atproto.repo.get_record(
         {
-            "repo": parts.repo,
+            "repo": await resolve_repo_did(parts.repo),
             "collection": parts.collection,
             "rkey": parts.rkey,
         }
@@ -219,7 +205,10 @@ async def update_record(
     Returns:
         updated record response
     """
-    parts = URIParts.from_uri(uri, client.me.did if client.me else None)
+    if client.me is None:
+        raise ValueError("not authenticated")
+    parts = URIParts.from_uri(uri, client.me.did)
+    parts.repo = await resolve_repo_did(parts.repo)
 
     # get current
     current = await client.com.atproto.repo.get_record(
@@ -249,6 +238,7 @@ async def update_record(
             "collection": parts.collection,
             "rkey": parts.rkey,
             "record": updated_value,
+            "swapRecord": current.cid,
         }
     )
 
@@ -266,7 +256,10 @@ async def delete_record(
     Raises:
         RecordNotFoundError: if no record exists at the URI
     """
-    parts = URIParts.from_uri(uri, client.me.did if client.me else None)
+    if client.me is None:
+        raise ValueError("not authenticated")
+    parts = URIParts.from_uri(uri, client.me.did)
+    parts.repo = await resolve_repo_did(parts.repo)
     target = {
         "repo": parts.repo,
         "collection": parts.collection,
@@ -298,7 +291,9 @@ async def describe_repo(
     Returns:
         response with handle, did, didDoc, collections, handleIsCorrect
     """
-    return await client.com.atproto.repo.describe_repo({"repo": repo})
+    return await client.com.atproto.repo.describe_repo(
+        {"repo": await resolve_repo_did(repo)}
+    )
 
 
 async def upload_blob(

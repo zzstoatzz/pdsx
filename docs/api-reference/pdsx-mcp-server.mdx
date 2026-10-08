@@ -39,18 +39,10 @@ Return a complete page or a retryable size error; never skip records.
 ### `_truncate_query_response` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L165" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
-_truncate_query_response(result: Any) -> Any
+_truncate_query_response(result: Any, retry_cursor: str | None = None) -> Any
 ```
 
-
-trim an oversized query response so it doesn't flood the client context.
-
-trims the largest list-valued field (e.g. listRepos' 'repos') until the
-serialized response fits, and annotates what was dropped. a bare list
-(a `select` result) is cut to fit and gets a trailing marker.
-
-
-### `usage_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L221" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `usage_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L181" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 usage_guide() -> str
@@ -60,7 +52,7 @@ usage_guide() -> str
 instructions for using pdsx MCP tools.
 
 
-### `create_post_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L268" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `create_post_guide` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L228" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 create_post_guide() -> str
@@ -70,7 +62,7 @@ create_post_guide() -> str
 instructions for creating posts.
 
 
-### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L323" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `list_records` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L283" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 list_records(collection: str, limit: int = 10, repo: str | None = None, cursor: str | None = None, select: str | None = None) -> dict[str, Any]
@@ -102,7 +94,7 @@ examples:
 - results and the PDS cursor, or an explicit error requiring a retry
 
 
-### `describe_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L389" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `describe_repo` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L349" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 describe_repo(repo: str) -> RepoDescriptionResponse
@@ -124,7 +116,7 @@ examples:
 - dict with handle, did, collections, and handleIsCorrect
 
 
-### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L420" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `get_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L380" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 get_record(uri: str, repo: str | None = None) -> RecordResponse
@@ -148,7 +140,7 @@ examples:
 - record with uri, cid, and value fields
 
 
-### `query` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L471" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `query` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L428" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 query(nsid: str, params: dict[str, Any] | None = None, host: str | None = None, repo: str | None = None, authenticated: bool = False, select: str | None = None) -> dict[str, Any] | list[Any]
@@ -161,7 +153,7 @@ call a read-only XRPC *query* method (HTTP GET).
 returned, and is how a big getter stays readable: app.bsky.feed.getPosts
 with 25 uris is ~55k chars of post views, but
 ``select=".posts[] | {uri, handle: .author.handle, text: .record.text}"``
-is ~6k. anything over 30k chars is trimmed, so project before you page.
+is ~6k. oversized responses require retrying the same page with a narrower projection.
 
 this is the read counterpart the record tools don't cover — sync, identity,
 server, and the app.bsky.* getter family. it is GET-only and structurally
@@ -201,13 +193,13 @@ targeting (choose at most one):
 allowlist. kept so existing callers don't fail validation.
 
 **Returns:**
-- the method's JSON response (large list fields are trimmed; paginate
-- with cursor). transport / HTTP / decode failures come back as a
+- the method's JSON response, or response_too_large with retry_cursor
+- to retry the same page with a lower limit or narrower select. transport / HTTP / decode failures come back as a
 - structured ``{"error": ..., "message": ...}`` dict rather than
 - raising — so a bad host guess doesn't burn the caller's retry budget.
 
 
-### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L616" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `create_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L584" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 create_record(collection: str, record: dict[str, Any], rkey: str | None = None) -> CreateResponse
@@ -226,7 +218,7 @@ create a new record. requires authentication.
 - dict with uri and cid of created record
 
 
-### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L641" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `update_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L609" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 update_record(uri: str, updates: dict[str, Any]) -> UpdateResponse
@@ -245,7 +237,7 @@ fetches the current record, merges your updates, and puts it back.
 - dict with uri and cid of updated record
 
 
-### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L665" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `delete_record` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L633" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 delete_record(uri: str) -> DeleteResponse
@@ -265,7 +257,7 @@ examples:
 - confirmation with deleted uri
 
 
-### `whoami` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L691" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `whoami` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L659" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 whoami() -> IdentityResponse
@@ -281,7 +273,7 @@ requires authentication via x-atproto-handle and x-atproto-password headers.
 - dict with handle and did of authenticated user
 
 
-### `me_resource` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L715" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `me_resource` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L683" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 me_resource() -> str
@@ -291,7 +283,7 @@ me_resource() -> str
 current authenticated user identity.
 
 
-### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L731" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `main` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/server.py#L699" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 main() -> None

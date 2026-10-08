@@ -60,7 +60,10 @@ async def batch_delete(
     """
     successful: list[str] = []
     failed: list[tuple[str, Exception]] = []
+    if concurrency < 1:
+        raise ValueError("concurrency must be positive")
     semaphore = asyncio.Semaphore(concurrency)
+    stopped = asyncio.Event()
 
     progress: Progress | None = None
     task_id: TaskID | None = None
@@ -80,13 +83,15 @@ async def batch_delete(
     async def delete_one(uri: str) -> None:
         """delete a single record with concurrency control."""
         async with semaphore:
+            if stopped.is_set():
+                return
             try:
                 await delete_record(client, uri)
                 successful.append(uri)
             except Exception as e:
                 failed.append((uri, e))
                 if fail_fast:
-                    raise
+                    stopped.set()
             finally:
                 if progress and task_id is not None:
                     progress.update(task_id, advance=1)
@@ -127,9 +132,14 @@ async def batch_create(
     Returns:
         batch result with successful URIs and failed operations
     """
+    if rkeys is not None and len(rkeys) != len(records):
+        raise ValueError("rkeys must have one entry per record")
     successful: list[str] = []
     failed: list[tuple[str, Exception]] = []
+    if concurrency < 1:
+        raise ValueError("concurrency must be positive")
     semaphore = asyncio.Semaphore(concurrency)
+    stopped = asyncio.Event()
 
     progress: Progress | None = None
     task_id: TaskID | None = None
@@ -151,6 +161,8 @@ async def batch_create(
     ) -> None:
         """create a single record with concurrency control."""
         async with semaphore:
+            if stopped.is_set():
+                return
             try:
                 response = await create_record(client, collection, record, rkey=rkey)
                 successful.append(response.uri)
@@ -158,12 +170,12 @@ async def batch_create(
                 # use index as identifier since we don't have URI yet
                 failed.append((f"record #{index + 1}", e))
                 if fail_fast:
-                    raise
+                    stopped.set()
             finally:
                 if progress and task_id is not None:
                     progress.update(task_id, advance=1)
 
-    resolved_rkeys = rkeys or [None] * len(records)
+    resolved_rkeys = rkeys if rkeys is not None else [None] * len(records)
 
     try:
         await asyncio.gather(
@@ -206,7 +218,10 @@ async def batch_update(
     """
     successful: list[str] = []
     failed: list[tuple[str, Exception]] = []
+    if concurrency < 1:
+        raise ValueError("concurrency must be positive")
     semaphore = asyncio.Semaphore(concurrency)
+    stopped = asyncio.Event()
 
     progress: Progress | None = None
     task_id: TaskID | None = None
@@ -226,13 +241,15 @@ async def batch_update(
     async def update_one(uri: str, update_dict: dict[str, RecordValue]) -> None:
         """update a single record with concurrency control."""
         async with semaphore:
+            if stopped.is_set():
+                return
             try:
                 await update_record(client, uri, update_dict)
                 successful.append(uri)
             except Exception as e:
                 failed.append((uri, e))
                 if fail_fast:
-                    raise
+                    stopped.set()
             finally:
                 if progress and task_id is not None:
                     progress.update(task_id, advance=1)
