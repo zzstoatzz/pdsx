@@ -208,7 +208,7 @@ class TestUpdateRecord:
         self, mock_client_no_auth: AsyncClient
     ) -> None:
         """test shorthand URI fails without authentication."""
-        with pytest.raises(ValueError, match="shorthand URI requires authentication"):
+        with pytest.raises(ValueError, match="not authenticated"):
             await update_record(
                 mock_client_no_auth,
                 "app.bsky.actor.profile/self",
@@ -292,7 +292,7 @@ class TestDeleteRecord:
         self, mock_client_no_auth: AsyncClient
     ) -> None:
         """test shorthand URI fails without authentication."""
-        with pytest.raises(ValueError, match="shorthand URI requires authentication"):
+        with pytest.raises(ValueError, match="not authenticated"):
             await delete_record(
                 mock_client_no_auth,
                 "app.bsky.feed.post/abc123",
@@ -456,7 +456,7 @@ class TestDescribeRepo:
             return_value=mock_response
         )
 
-        result = await describe_repo(mock_client, "test.bsky.social")
+        result = await describe_repo(mock_client, "did:plc:test123")
 
         assert result.handle == "test.bsky.social"
         assert result.did == "did:plc:test123"
@@ -466,7 +466,7 @@ class TestDescribeRepo:
         ]
         assert result.handle_is_correct is True
         mock_client.com.atproto.repo.describe_repo.assert_called_once_with(
-            {"repo": "test.bsky.social"}
+            {"repo": "did:plc:test123"}
         )
 
     async def test_describe_repo_no_auth_needed(
@@ -484,7 +484,7 @@ class TestDescribeRepo:
             return_value=mock_response
         )
 
-        result = await describe_repo(mock_client_no_auth, "other.bsky.social")
+        result = await describe_repo(mock_client_no_auth, "did:plc:other456")
 
         assert result.handle == "other.bsky.social"
         assert result.collections == ["app.bsky.feed.post"]

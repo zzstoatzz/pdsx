@@ -630,13 +630,12 @@ note: -r flag goes BEFORE the command (ls, get, etc.)
             if args.pds:
                 # prefer explicit --pds flag if provided
                 pds_url = args.pds
-            elif args.repo:
-                # for unauthenticated reads, auto-discover PDS
-                pds_url = await discover_pds(args.repo)
             elif is_get_with_full_uri:
                 # extract DID from at://did/collection/rkey
                 did = args.uri.replace("at://", "").split("/")[0]
                 pds_url = await discover_pds(did)
+            elif args.repo:
+                pds_url = await discover_pds(args.repo)
             else:
                 pds_url = settings.atproto_pds_url
             client = AsyncClient(base_url=pds_url)

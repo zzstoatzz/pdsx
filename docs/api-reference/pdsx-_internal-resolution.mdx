@@ -37,7 +37,13 @@ addresses (e.g. cloud metadata at 169.254.169.254). This does not defend
 against DNS rebinding, so callers must not follow redirects.
 
 
-### `discover_pds` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L87" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `resolve_repo_did` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L87" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+resolve_repo_did(repo: str) -> str
+```
+
+### `discover_pds` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L96" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 discover_pds(repo: str) -> str
