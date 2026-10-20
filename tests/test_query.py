@@ -61,15 +61,16 @@ def test_normalize_query_params_lowercases_bools():
     }
 
 
-def test_truncate_query_response_trims_largest_list():
+def test_oversized_query_page_requires_retry_without_skipping_records():
     big = {
         "repos": [{"did": "did:plc:" + "x" * 100} for _ in range(2000)],
         "cursor": "c",
     }
-    out = server._truncate_query_response(big)
-    assert out["truncated"] is True
-    assert len(out["repos"]) < 2000
-    assert out["cursor"] == "c"  # non-list fields preserved
+    out = server._truncate_query_response(big, retry_cursor="previous-page")
+    assert out["error"] == "response_too_large"
+    assert out["retry_cursor"] == "previous-page"
+    assert "cursor" not in out
+    assert "repos" not in out
 
 
 def test_truncate_query_response_passthrough_small():
@@ -410,10 +411,11 @@ async def test_query_select_projects_with_jq(monkeypatch):
     assert bad["error"] == "bad_select"
 
 
-def test_truncate_query_response_cuts_a_bare_list_and_marks_it():
+def test_oversized_projection_requires_retry():
     items = [{"text": "x" * 1000} for _ in range(60)]
     out = server._truncate_query_response(items)
-    assert out[-1]["truncated"] is True and out[-1]["of"] == 60
+    assert out["error"] == "response_too_large"
+    assert out["retry_cursor"] is None
     assert len(json.dumps(out)) <= server.MAX_RESPONSE_CHARS + 200
 
 

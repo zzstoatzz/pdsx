@@ -30,7 +30,7 @@ delete multiple records concurrently.
 - batch result with successful and failed operations
 
 
-### `batch_create` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L106" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `batch_create` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L111" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 batch_create(client: AsyncClient, collection: str, records: list[dict[str, RecordValue]]) -> BatchResult
@@ -52,7 +52,7 @@ create multiple records concurrently.
 - batch result with successful URIs and failed operations
 
 
-### `batch_update` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L187" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `batch_update` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L199" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 batch_update(client: AsyncClient, updates: list[tuple[str, dict[str, RecordValue]]]) -> BatchResult
@@ -72,7 +72,7 @@ update multiple records concurrently.
 - batch result with successful URIs and failed operations
 
 
-### `read_uris_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L252" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `read_uris_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L269" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 read_uris_from_stdin() -> list[str]
@@ -85,7 +85,7 @@ read URIs from stdin, one per line.
 - list of URIs read from stdin
 
 
-### `read_records_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L264" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `read_records_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L281" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 read_records_from_stdin() -> list[tuple[dict[str, RecordValue], str | None]]
@@ -103,7 +103,7 @@ if a record contains an 'rkey' field, it is extracted and returned separately.
 - `ValueError`: if JSON parsing fails
 
 
-### `read_updates_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L301" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `read_updates_from_stdin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L318" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 read_updates_from_stdin() -> list[tuple[str, dict[str, RecordValue]]]
@@ -121,7 +121,7 @@ each line should be a JSON object with a 'uri' field and update fields.
 - `ValueError`: if JSON parsing fails or uri field is missing
 
 
-### `display_batch_result` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L346" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `display_batch_result` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/batch.py#L363" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 display_batch_result(result: BatchResult, operation: str = 'deleted') -> None

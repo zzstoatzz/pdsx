@@ -91,3 +91,17 @@ pdsx -r did:plc:o53crari67ge7bvbv273lxln ls app.bsky.feed.post --limit 3 -o json
 - [configure for writes](/guides/configure-for-writes) - set up authentication
 - [repositories concept](/concepts/repositories) - understand the data model
 - [addressing concept](/concepts/addressing) - deep dive into DIDs and handles
+
+## identity and routing
+
+Handle inputs are resolved to DIDs before repo requests, including full AT-URIs.
+A full URI determines the target repository even when a default repo is configured.
+Failed discovery returns an error; it does not fall back to the caller's PDS.
+Authenticated query methods send the session only to the caller's PDS.
+
+Oversized MCP query and list responses return `response_too_large` with
+`retry_cursor`. Reduce `limit` or narrow `select` and retry the same page.
+No partial records are returned with a cursor that skips the omitted entries.
+
+Run public cross-PDS regression checks with
+`PDSX_LIVE_READS=1 uv run pytest tests/test_live_repository_reads.py`.

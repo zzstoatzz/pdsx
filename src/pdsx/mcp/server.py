@@ -170,54 +170,14 @@ def _record_page_response(
     }
 
 
-def _truncate_query_response(result: Any) -> Any:
-    """trim an oversized query response so it doesn't flood the client context.
-
-    trims the largest list-valued field (e.g. listRepos' 'repos') until the
-    serialized response fits, and annotates what was dropped. a bare list
-    (a `select` result) is cut to fit and gets a trailing marker.
-    """
-    try:
-        if len(json.dumps(result, default=str)) <= MAX_RESPONSE_CHARS:
-            return result
-    except (TypeError, ValueError):
+def _truncate_query_response(result: Any, retry_cursor: str | None = None) -> Any:
+    if len(json.dumps(result, default=str)) <= MAX_RESPONSE_CHARS:
         return result
-
-    if isinstance(result, list):
-        items = list(result)
-        while items and len(json.dumps(items, default=str)) > MAX_RESPONSE_CHARS:
-            items.pop()
-        return [*items, {"truncated": True, "kept": len(items), "of": len(result)}]
-    if not isinstance(result, dict):
-        return {
-            "truncated": True,
-            "message": f"response exceeded {MAX_RESPONSE_CHARS} chars",
-        }
-
-    list_keys = [k for k, v in result.items() if isinstance(v, list)]
-    if not list_keys:
-        return {
-            "truncated": True,
-            "message": f"response exceeded {MAX_RESPONSE_CHARS} chars",
-        }
-
-    key = max(list_keys, key=lambda k: len(result[k]))
-    original_len = len(result[key])
-    items = list(result[key])
-    trimmed = dict(result)
-    while (
-        items
-        and len(json.dumps({**trimmed, key: items}, default=str)) > MAX_RESPONSE_CHARS
-    ):
-        items = items[:-1]
-
-    trimmed[key] = items
-    trimmed["truncated"] = True
-    trimmed["message"] = (
-        f"trimmed '{key}' to {len(items)} of {original_len} items "
-        f"(response exceeded {MAX_RESPONSE_CHARS} chars; paginate with cursor)"
-    )
-    return trimmed
+    return {
+        "error": "response_too_large",
+        "retry_cursor": retry_cursor,
+        "message": "Reduce limit or narrow select, then retry the same page. No partial page returned.",
+    }
 
 
 # -----------------------------------------------------------------------------
@@ -487,10 +447,7 @@ async def get_record(
         return await _verified_record(uri, repo_to_use)
 
     # determine target repo for PDS discovery
-    target_repo = repo_to_use
-    if is_full_uri and not target_repo:
-        # extract repo from at://repo/collection/rkey
-        target_repo = uri.replace("at://", "").split("/")[0]
+    target_repo = URIParts.from_uri(uri).repo if is_full_uri else repo_to_use
 
     async with get_atproto_client(
         require_auth=False,
@@ -521,7 +478,7 @@ async def query(
     returned, and is how a big getter stays readable: app.bsky.feed.getPosts
     with 25 uris is ~55k chars of post views, but
     ``select=".posts[] | {uri, handle: .author.handle, text: .record.text}"``
-    is ~6k. anything over 30k chars is trimmed, so project before you page.
+    is ~6k. oversized responses require retrying the same page with a narrower projection.
 
     this is the read counterpart the record tools don't cover — sync, identity,
     server, and the app.bsky.* getter family. it is GET-only and structurally
@@ -558,8 +515,8 @@ async def query(
             allowlist. kept so existing callers don't fail validation.
 
     returns:
-        the method's JSON response (large list fields are trimmed; paginate
-        with cursor). transport / HTTP / decode failures come back as a
+        the method's JSON response, or response_too_large with retry_cursor
+        to retry the same page with a lower limit or narrower select. transport / HTTP / decode failures come back as a
         structured ``{"error": ..., "message": ...}`` dict rather than
         raising — so a bad host guess doesn't burn the caller's retry budget.
     """
@@ -580,6 +537,16 @@ async def query(
     # the deprecated `authenticated` flag — a caller-supplied auth knob was
     # a degree of freedom the server already fully determines.
     if nsid in AUTHENTICATED_QUERY_ALLOWLIST:
+        caller_pds = await resolve_pds_url()
+        requested_pds = (
+            await discover_pds(repo)
+            if repo
+            else normalize_service_url(host)
+            if host
+            else caller_pds
+        )
+        if requested_pds.rstrip("/") != caller_pds.rstrip("/"):
+            raise ValueError("authenticated queries must target the caller's PDS")
         # resolve the caller's session and extract the access JWT; the JWT is
         # an opaque string we then send as Bearer on the GET. the context
         # manager just yields the client — exiting it does not invalidate the
@@ -609,7 +576,7 @@ async def query(
         # default to the caller's PDS — it proxies authenticated app.bsky.*
         # calls to the AppView, so this works for notifications, private
         # feeds, etc., without the caller needing to know AppView routing.
-        base_url = await resolve_pds_url()
+        base_url = caller_pds
     else:
         base_url = PUBLIC_APPVIEW
 
@@ -651,9 +618,10 @@ async def query(
         return _truncate_query_response(
             selected[0]
             if len(selected) == 1 and isinstance(selected[0], dict)
-            else selected
+            else selected,
+            retry_cursor=(params or {}).get("cursor"),
         )
-    return _truncate_query_response(result)
+    return _truncate_query_response(result, retry_cursor=(params or {}).get("cursor"))
 
 
 async def _verified_record(uri: str, repo: str | None) -> RecordResponse:

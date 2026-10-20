@@ -52,21 +52,13 @@ class AtprotoAuthMiddleware(Middleware):
 
         # set_state is sync in fastmcp 2.x, a coroutine in 3.x (see #85);
         # _maybe_await handles either so this works across runtimes
-        if handle:
-            logger.debug("extracted atproto handle from http headers")
-            await _maybe_await(fastmcp_ctx.set_state("atproto_handle", handle))
-
-        if password:
-            logger.debug("extracted atproto password from http headers")
-            await _maybe_await(fastmcp_ctx.set_state("atproto_password", password))
-
-        if pds_url:
-            logger.debug("extracted atproto pds url from http headers")
-            await _maybe_await(fastmcp_ctx.set_state("atproto_pds_url", pds_url))
-
-        if repo:
-            logger.debug("extracted atproto repo from http headers")
-            await _maybe_await(fastmcp_ctx.set_state("atproto_repo", repo))
+        for key, value in (
+            ("handle", handle),
+            ("password", password),
+            ("pds_url", pds_url),
+            ("repo", repo),
+        ):
+            await _maybe_await(fastmcp_ctx.set_state("atproto_" + key, value))
 
     async def on_call_tool(
         self,

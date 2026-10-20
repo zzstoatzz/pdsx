@@ -84,6 +84,15 @@ class URIParts:
         raise ValueError(f"invalid URI format: {uri}")
 
 
+async def resolve_repo_did(repo: str) -> str:
+    if repo.startswith("did:"):
+        return repo
+    did = await AsyncIdResolver().handle.resolve(repo)
+    if not did:
+        raise ValueError(f"could not resolve handle: {repo}")
+    return did
+
+
 async def discover_pds(repo: str) -> str:
     """discover PDS URL from handle or DID.
 
@@ -98,13 +107,7 @@ async def discover_pds(repo: str) -> str:
     """
     resolver = AsyncIdResolver()
 
-    # if repo looks like a DID, use it directly; otherwise resolve handle to DID
-    if repo.startswith("did:"):
-        did = repo
-    else:
-        did = await resolver.handle.resolve(repo)
-        if not did:
-            raise ValueError(f"could not resolve handle: {repo}")
+    did = await resolve_repo_did(repo)
 
     # resolve DID to atproto data which includes PDS URL
     atproto_data = await resolver.did.resolve_atproto_data(did)
