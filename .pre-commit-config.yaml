@@ -45,10 +45,3 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
-    hooks:
-      - id: no-commit-to-branch
-        name: prevent commits to main
-        args: [--branch, main]

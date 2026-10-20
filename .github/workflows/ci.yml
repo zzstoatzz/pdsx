@@ -50,8 +50,6 @@ jobs:
 
       - name: run prek
         run: uv run prek run --all-files
-        env:
-          SKIP: no-commit-to-branch
 
   test:
     timeout-minutes: 5
