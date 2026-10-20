@@ -97,13 +97,14 @@ claude mcp add pdsx --env ATPROTO_HANDLE=your.handle --env ATPROTO_PASSWORD=your
 
 ## available tools
 
-the MCP server exposes eight tools:
+the MCP server exposes nine tools:
 
 | tool | auth required | description |
 |------|--------------|-------------|
 | `list_records` | only without `repo` | list records in a collection |
-| `get_record` | only without `repo` | get a specific record by URI |
-| `describe_repo` | only without `repo` | list the collections a repo holds |
+| `get_record` | only without `repo` | get a specific record by URI; `verify=true` checks its signed proof |
+| `describe_repo` | only without `repo` | list the collections a repo holds and check its handle both ways |
+| `identity_history` | never | a DID's handles, PDSes and keys over time, with the PLC chain checked |
 | `query` | depends on method | issue an arbitrary read-only XRPC query |
 | `create_record` | always | create a new record |
 | `update_record` | always | update an existing record |

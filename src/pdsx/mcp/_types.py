@@ -1,6 +1,6 @@
 """type definitions for pdsx MCP server."""
 
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
 
 class RecordResponse(TypedDict):
@@ -9,6 +9,7 @@ class RecordResponse(TypedDict):
     uri: str
     cid: str | None
     value: dict
+    verification: NotRequired[dict]
 
 
 class CreateResponse(TypedDict):
@@ -45,6 +46,10 @@ class RepoDescriptionResponse(TypedDict):
     did: str
     collections: list[str]
     handleIsCorrect: bool
+    handle_verified: NotRequired[bool]
+    pds: NotRequired[str | None]
+    signing_key: NotRequired[str | None]
+    identity_note: NotRequired[str]
 
 
 class CredentialsContext(TypedDict):

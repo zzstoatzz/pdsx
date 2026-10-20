@@ -122,6 +122,31 @@ The blob lives on the *repo owner's* PDS. Asking a different host for it will
 - **Unknown lexicons are normal.** A repo may hold records from any app. Read
   one and look at its `$type` rather than assuming a schema.
 
+## trusting what you read
+
+A PDS hosts a repo; it doesn't vouch for it. The account's DID document is
+the authority, and the MCP tools can check against it for you. Reach for
+these when the answer matters, not on every read:
+
+- **Before trusting who an account is**, check `describe_repo`'s
+  `handle_verified`. It's true only if the handle resolves to the DID *and*
+  the DID document claims the handle back. `handleIsCorrect` is the PDS's
+  own claim, and anyone can write any handle into their DID document, so
+  neither half alone proves anything.
+- **When provenance matters** (quoting someone, settling a dispute, a record
+  served by a host you don't know), call `get_record(..., verify=True)`. It
+  fetches the repo's signed proof and checks the commit signature against
+  the DID document's signing key, the MST path to the record, and every
+  block hash. If `verification.verified` is false, read the reason and don't
+  present the record as theirs.
+- **For migrations, takeovers, or "is this the same account"**, use
+  `identity_history`. For did:plc it lists every handle, PDS and signing key
+  the DID has had, and `chain_verified` says each change was signed by a
+  rotation key the account already held. That's what lets an account leave
+  a PDS without the PDS's permission. Nullified ops were overridden by a
+  higher-priority rotation key during the recovery window. did:web has no
+  history; whoever controls the domain controls the identity.
+
 ## MCP tools
 
 When the pdsx MCP server is available, `list_records`, `get_record`,

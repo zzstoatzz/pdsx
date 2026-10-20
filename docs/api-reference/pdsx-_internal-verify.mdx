@@ -1,0 +1,158 @@
+---
+title: verify
+sidebarTitle: verify
+---
+
+# `pdsx._internal.verify`
+
+
+cryptographic checks a model can't do in its head.
+
+three checks, all against public data and none trusting the PDS's word:
+
+- record proofs: ``com.atproto.sync.getRecord`` returns a CAR holding the
+  signed commit, the MST nodes on the path to the record, and the record
+  block. we hash every block, check the commit signature against the signing
+  key in the DID document, and walk the MST from the commit's data root to
+  ``collection/rkey``.
+- handles: a handle is only trustworthy if it resolves to the DID *and* the
+  DID document claims the handle back.
+- PLC history: every op in a did:plc audit log is signed by a rotation key
+  from the op it builds on, and the DID itself is the hash of the genesis op.
+
+
+## Functions
+
+### `_read_varint` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L41" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_read_varint(data: bytes, pos: int) -> tuple[int, int]
+```
+
+### `_read_cid` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L54" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_read_cid(data: bytes, pos: int) -> tuple[bytes, int]
+```
+
+### `cid_for` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L66" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+cid_for(data: bytes, codec: int = DAG_CBOR) -> bytes
+```
+
+
+CIDv1 (sha2-256) bytes for a block.
+
+
+### `cid_str` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L71" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+cid_str(cid: bytes) -> str
+```
+
+### `read_car` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L75" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+read_car(data: bytes) -> tuple[bytes, dict[bytes, bytes]]
+```
+
+
+parse a CARv1 into (root cid, {cid: raw block}), checking every hash.
+
+the atproto sdk's CAR decoder hands back decoded blocks, which loses the
+raw bytes a hash check needs, so this reads the framing directly.
+
+
+### `ipld_to_json` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L102" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+ipld_to_json(value: Any) -> Any
+```
+
+
+dag-cbor decoded values -> atproto JSON form ($link / $bytes).
+
+
+### `_block` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L135" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_block(blocks: dict[bytes, bytes], cid: bytes, what: str) -> Any
+```
+
+### `mst_lookup` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L142" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+mst_lookup(blocks: dict[bytes, bytes], root: bytes, key: str) -> bytes | None
+```
+
+
+walk the MST from root; return the value CID at key, or None if absent.
+
+raises ProofError if a node on the path is missing from the proof.
+
+
+### `verify_record_proof` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L167" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+verify_record_proof(car: bytes, did: str, collection: str, rkey: str, signing_key: str) -> RecordProof
+```
+
+
+check a sync.getRecord CAR against the repo's signing key (a did:key).
+
+
+### `_b64url_decode` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L219" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_b64url_decode(text: str) -> bytes
+```
+
+### `_rotation_keys` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L223" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_rotation_keys(op: dict[str, Any]) -> list[str]
+```
+
+### `_signed_by` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L229" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_signed_by(op: dict[str, Any], keys: list[str]) -> str | None
+```
+
+### `plc_did_for` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L245" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+plc_did_for(genesis: dict[str, Any]) -> str
+```
+
+### `_summarize` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L258" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+_summarize(op: dict[str, Any]) -> dict[str, Any]
+```
+
+### `verify_plc_log` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L277" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+verify_plc_log(did: str, entries: list[dict[str, Any]]) -> PlcHistory
+```
+
+
+check a plc.directory /log/audit response and summarize each op.
+
+every op must be signed by a rotation key of the op its ``prev`` names,
+and the genesis op must hash to the DID.
+
+
+## Classes
+
+### `ProofError` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L32" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+
+raised when a proof is malformed or does not check out.
+
+
+### `RecordProof` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L126" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+### `PlcHistory` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/verify.py#L251" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>

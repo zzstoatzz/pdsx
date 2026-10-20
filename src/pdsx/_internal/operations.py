@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import httpx
+from atproto_core.nsid import validate_nsid
 
 if sys.version_info >= (3, 11):
     from datetime import UTC
@@ -70,6 +71,10 @@ async def query(
         the method's JSON response; non-object responses are wrapped as
         {'result': <value>}
     """
+    # the nsid becomes a url path segment; anything else (slashes, dots
+    # leading out of /xrpc) would let a caller fetch arbitrary paths
+    if not validate_nsid(nsid, soft_fail=True):
+        raise ValueError(f"not an NSID: {nsid!r}")
     reject_private_host(base_url)
 
     headers = {"Authorization": f"Bearer {auth_token}"} if auth_token else None

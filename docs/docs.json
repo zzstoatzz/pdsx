@@ -62,12 +62,14 @@
               "api-reference/pdsx-_internal-batch",
               "api-reference/pdsx-_internal-config",
               "api-reference/pdsx-_internal-display",
+              "api-reference/pdsx-_internal-identity",
               "api-reference/pdsx-_internal-operations",
               "api-reference/pdsx-_internal-output",
               "api-reference/pdsx-_internal-parsing",
               "api-reference/pdsx-_internal-permissioned",
               "api-reference/pdsx-_internal-resolution",
-              "api-reference/pdsx-_internal-types"
+              "api-reference/pdsx-_internal-types",
+              "api-reference/pdsx-_internal-verify"
             ]
           }
         ],

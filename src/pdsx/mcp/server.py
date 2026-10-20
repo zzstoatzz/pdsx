@@ -5,8 +5,16 @@ from typing import Any
 
 import httpx
 import jq  # type: ignore[unresolved-import]  # c extension, no stubs
+from atproto_core.exceptions import AtProtocolError
+from atproto_core.nsid import validate_nsid
+from atproto_identity.resolver import AsyncIdResolver
 from fastmcp import FastMCP
 
+from pdsx._internal.identity import (
+    fetch_record_proof,
+    plc_history,
+    verify_identity,
+)
 from pdsx._internal.operations import (
     create_record as _create_record,
 )
@@ -392,6 +400,9 @@ async def describe_repo(
     """describe a repo and list its collections.
 
     use this to discover what collections exist in a repo before listing records.
+    also checks identity independently of the PDS: `handle_verified` is true
+    only if the handle resolves to the DID and the DID document claims the
+    handle back. `pds` and `signing_key` come from the DID document.
 
     examples:
     - describe_repo("zzstoatzz.io") - see what collections a user has
@@ -401,30 +412,55 @@ async def describe_repo(
         repo: handle or DID to describe
 
     returns:
-        dict with handle, did, collections, and handleIsCorrect
+        dict with handle, did, collections, handleIsCorrect (the PDS's own
+        claim), handle_verified, pds, and signing_key
     """
     async with get_atproto_client(
         require_auth=False,
         target_repo=repo,
     ) as client:
         response = await _describe_repo(client, repo)
-        return RepoDescriptionResponse(
+        result = RepoDescriptionResponse(
             handle=response.handle,
             did=response.did,
             collections=response.collections or [],
             handleIsCorrect=response.handle_is_correct,
         )
+    try:
+        identity = await verify_identity(response.did)
+    except (ValueError, httpx.HTTPError, AtProtocolError) as exc:
+        result["handle_verified"] = False
+        result["identity_note"] = f"identity check failed: {exc}"
+        return result
+    result["handle_verified"] = (
+        identity.handle_verified and identity.handle == response.handle.lower()
+    )
+    result["pds"] = identity.pds
+    result["signing_key"] = identity.signing_key
+    if identity.reason:
+        result["identity_note"] = identity.reason
+    elif not result["handle_verified"]:
+        result["identity_note"] = (
+            f"PDS reports {response.handle!r}, DID document claims {identity.handle!r}"
+        )
+    return result
 
 
 @mcp.tool
 async def get_record(
     uri: str,
     repo: str | None = None,
+    verify: bool = False,
 ) -> RecordResponse:
     """get a specific record by uri, preserving its full value.
 
     unlike compact list results, this retains facets, byte ranges, $type,
     language tags, and complete reply references for source inspection.
+
+    verify=True fetches the repo's signed proof instead and checks the commit
+    signature against the DID document's key, the MST path to the record,
+    and every block hash. the value returned is the one the proof commits to;
+    `verification.verified` says whether it checked out, and why not.
 
     examples:
     - get_record("at://did:plc:.../app.bsky.feed.post/abc123")
@@ -446,6 +482,9 @@ async def get_record(
             "repo parameter is required for shorthand URIs. example: "
             'get_record("app.bsky.actor.profile/self", repo="someone.bsky.social")'
         )
+
+    if verify:
+        return await _verified_record(uri, repo_to_use)
 
     # determine target repo for PDS discovery
     target_repo = repo_to_use
@@ -526,6 +565,11 @@ async def query(
     """
     if repo and host:
         raise ValueError("pass either 'repo' or 'host', not both")
+    if not validate_nsid(nsid, soft_fail=True):
+        return {
+            "error": "invalid_nsid",
+            "message": f"{nsid!r} is not an NSID (e.g. 'com.atproto.sync.listRepos')",
+        }
 
     auth_token: str | None = None
 
@@ -610,6 +654,58 @@ async def query(
             else selected
         )
     return _truncate_query_response(result)
+
+
+async def _verified_record(uri: str, repo: str | None) -> RecordResponse:
+    parts = URIParts.from_uri(uri, repo)
+    did = parts.repo
+    if not did.startswith("did:"):
+        resolved = await AsyncIdResolver().handle.resolve(did.lower())
+        if not resolved:
+            raise ValueError(f"could not resolve handle: {did}")
+        did = resolved
+    proof = await fetch_record_proof(did, parts.collection, parts.rkey)
+    verification: dict[str, Any] = {"verified": proof.verified}
+    if proof.reason:
+        verification["reason"] = proof.reason
+    if proof.commit:
+        verification["commit"] = proof.commit
+        verification["rev"] = proof.rev
+    return RecordResponse(
+        uri=f"at://{did}/{parts.collection}/{parts.rkey}",
+        cid=proof.cid,
+        value=proof.value or {},
+        verification=verification,
+    )
+
+
+@mcp.tool
+async def identity_history(repo: str) -> dict[str, Any]:
+    """a DID's full history: every handle, PDS and key it has had.
+
+    for did:plc, reads the plc.directory audit log and checks that each op is
+    signed by a rotation key of the op before it (`chain_verified`). nullified
+    ops were overridden by a higher-priority rotation key. did:web has no
+    history to read.
+
+    args:
+        repo: handle or DID
+    """
+    did = repo
+    if not repo.startswith("did:"):
+        did = await AsyncIdResolver().handle.resolve(repo.lower())
+        if not did:
+            raise ValueError(f"could not resolve handle: {repo}")
+    try:
+        return _truncate_query_response(await plc_history(did))
+    except httpx.HTTPStatusError as exc:
+        return {
+            "error": "http_status",
+            "status": exc.response.status_code,
+            "message": exc.response.text[:500],
+        }
+    except httpx.RequestError as exc:
+        return {"error": "transport", "message": f"{type(exc).__name__}: {exc}"}
 
 
 @mcp.tool
