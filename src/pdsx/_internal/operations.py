@@ -18,7 +18,12 @@ else:
 if TYPE_CHECKING:
     from atproto import AsyncClient, models
 
-from pdsx._internal.resolution import URIParts, reject_private_host, resolve_repo_did
+from pdsx._internal.resolution import (
+    URIParts,
+    reject_private_host,
+    require_origin,
+    resolve_repo_did,
+)
 from pdsx._internal.types import RecordValue
 
 
@@ -75,6 +80,7 @@ async def query(
     # leading out of /xrpc) would let a caller fetch arbitrary paths
     if not validate_nsid(nsid, soft_fail=True):
         raise ValueError(f"not an NSID: {nsid!r}")
+    require_origin(base_url)
     reject_private_host(base_url)
 
     headers = {"Authorization": f"Bearer {auth_token}"} if auth_token else None

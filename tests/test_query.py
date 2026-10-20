@@ -7,7 +7,11 @@ from typing import ClassVar
 import pytest
 
 from pdsx._internal.operations import _normalize_query_params, query
-from pdsx._internal.resolution import normalize_service_url, reject_private_host
+from pdsx._internal.resolution import (
+    normalize_service_url,
+    reject_private_host,
+    require_origin,
+)
 from pdsx.mcp import server
 
 # -----------------------------------------------------------------------------
@@ -50,6 +54,29 @@ def test_normalize_service_url():
     assert normalize_service_url("pds.zat.dev") == "https://pds.zat.dev"
     assert normalize_service_url("https://pds.zat.dev") == "https://pds.zat.dev"
     assert normalize_service_url("http://localhost:3000") == "http://localhost:3000"
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "https://plc.directory/did:plc:xbtmt2zjwlrfegqvch7fboei/log/audit#",
+        "https://plc.directory#",
+        "https://example.com/.well-known/did.json?",
+        "https://user@pds.zat.dev",
+        "ftp://pds.zat.dev",
+    ],
+)
+def test_query_rejects_hosts_that_are_not_origins(base_url):
+    with pytest.raises(ValueError, match="not a service origin"):
+        require_origin(base_url)
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    ["https://pds.zat.dev", "https://pds.zat.dev/", "http://localhost:3000"],
+)
+def test_query_accepts_service_origins(base_url):
+    require_origin(base_url)
 
 
 def test_normalize_query_params_lowercases_bools():

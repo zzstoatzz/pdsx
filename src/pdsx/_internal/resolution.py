@@ -20,6 +20,28 @@ def normalize_service_url(host: str) -> str:
     return f"https://{host}"
 
 
+def require_origin(base_url: str) -> None:
+    """raise ValueError unless base_url is a bare scheme://host[:port].
+
+    XRPC is always served at /xrpc/<nsid> on a service origin, and atproto
+    service endpoints carry no path. Anything after the authority (a path, a
+    query, or a '#' that swallows the /xrpc suffix) would turn a query into a
+    fetch of an arbitrary URL.
+    """
+    parts = urlparse(base_url)
+    if (
+        parts.scheme not in ("http", "https")
+        or not parts.hostname
+        or parts.username
+        or parts.password
+        or parts.path not in ("", "/")
+        or any(c in base_url for c in "?#;")
+    ):
+        raise ValueError(
+            f"not a service origin: {base_url!r} (expected e.g. 'https://pds.zat.dev')"
+        )
+
+
 def reject_private_host(base_url: str) -> None:
     """raise ValueError if base_url targets a non-public address.
 
