@@ -65,6 +65,7 @@ def fake_pds(monkeypatch):
         instance = MagicMock()
         instance.base_url = base_url
         instance.me = None
+        instance.logged_in_as = None
         server = instance.com.atproto.server
         server.create_account = AsyncMock(
             return_value=SimpleNamespace(did="did:plc:new", handle="eval.pds1.test")
@@ -109,6 +110,33 @@ class TestSessionSwitching:
         async with client.get_atproto_client(require_auth=True) as session:
             assert session.base_url == "https://pds1.test"
             assert session.logged_in_as == ("eval.pds1.test", "pw")
+
+    @pytest.mark.parametrize("target", ["EVAL.pds1.test", "did:plc:new"])
+    async def test_reads_of_the_new_account_skip_discovery(
+        self, fake_pds, monkeypatch, target
+    ):
+        from pdsx._internal import resolution
+
+        discover = AsyncMock(side_effect=AssertionError("should not discover"))
+        monkeypatch.setattr(resolution, "discover_pds", discover)
+        await accounts.create_account(
+            "eval.pds1.test", "e@x.test", "pw", pds="https://pds1.test"
+        )
+        async with client.get_atproto_client(target_repo=target) as session:
+            assert session.base_url == "https://pds1.test"
+            assert session.logged_in_as is None
+
+    async def test_reads_of_other_repos_still_discover(self, fake_pds, monkeypatch):
+        from pdsx._internal import resolution
+
+        discover = AsyncMock(return_value="https://elsewhere.example")
+        monkeypatch.setattr(resolution, "discover_pds", discover)
+        await accounts.create_account(
+            "eval.pds1.test", "e@x.test", "pw", pds="https://pds1.test"
+        )
+        async with client.get_atproto_client(target_repo="someone.else") as session:
+            assert session.base_url == "https://elsewhere.example"
+        discover.assert_awaited_once_with("someone.else")
 
     async def test_default_pds_is_the_configured_one(self, fake_pds):
         created = await accounts.create_account("eval.pds.example", "e@x.test", "pw")

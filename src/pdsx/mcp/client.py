@@ -184,11 +184,18 @@ async def get_atproto_client(
     skip_auth = False
 
     if target_repo and not require_auth:
-        # discover PDS for the target repo
-        from pdsx._internal.resolution import discover_pds
+        if _active_account and target_repo.lower() in (
+            _active_account["handle"].lower(),
+            _active_account["did"],
+        ):
+            # an account made by create_account lives on the PDS that made it;
+            # sandbox handles and DIDs are often unresolvable from public DNS/PLC
+            pds_url = _active_account["pds_url"]
+        else:
+            from pdsx._internal.resolution import discover_pds
 
-        pds_url = await discover_pds(target_repo)
-        logger.debug("discovered PDS for %s: %s", target_repo, pds_url)
+            pds_url = await discover_pds(target_repo)
+            logger.debug("discovered PDS for %s: %s", target_repo, pds_url)
         skip_auth = True
 
     if not pds_url:
