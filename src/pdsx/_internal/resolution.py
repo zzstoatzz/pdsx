@@ -9,6 +9,18 @@ from urllib.parse import urlparse
 
 from atproto_identity.resolver import AsyncIdResolver
 
+# handles this process created itself (pdsx.mcp.accounts). a sandbox PDS's
+# handles usually don't resolve through public DNS, but the PDS told us the DID.
+_pinned_handles: dict[str, str] = {}
+
+
+def pin_handle(handle: str, did: str) -> None:
+    _pinned_handles[handle.lower()] = did
+
+
+def unpin_handle(handle: str) -> None:
+    _pinned_handles.pop(handle.lower(), None)
+
 
 def normalize_service_url(host: str) -> str:
     """coerce a bare host into an https base URL.
@@ -109,6 +121,8 @@ class URIParts:
 async def resolve_repo_did(repo: str) -> str:
     if repo.startswith("did:"):
         return repo
+    if repo.lower() in _pinned_handles:
+        return _pinned_handles[repo.lower()]
     did = await AsyncIdResolver().handle.resolve(repo)
     if not did:
         raise ValueError(f"could not resolve handle: {repo}")

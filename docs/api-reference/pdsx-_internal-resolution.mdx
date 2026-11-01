@@ -10,7 +10,19 @@ PDS and URI resolution utilities.
 
 ## Functions
 
-### `normalize_service_url` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L13" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `pin_handle` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L17" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+pin_handle(handle: str, did: str) -> None
+```
+
+### `unpin_handle` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L21" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+unpin_handle(handle: str) -> None
+```
+
+### `normalize_service_url` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L25" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 normalize_service_url(host: str) -> str
@@ -22,7 +34,7 @@ coerce a bare host into an https base URL.
 'pds.zat.dev' -> 'https://pds.zat.dev'; an explicit scheme is left as-is.
 
 
-### `require_origin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L23" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `require_origin` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L35" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 require_origin(base_url: str) -> None
@@ -37,7 +49,7 @@ query, or a '#' that swallows the /xrpc suffix) would turn a query into a
 fetch of an arbitrary URL.
 
 
-### `reject_private_host` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L45" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `reject_private_host` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L57" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 reject_private_host(base_url: str) -> None
@@ -52,13 +64,13 @@ addresses (e.g. cloud metadata at 169.254.169.254). This does not defend
 against DNS rebinding, so callers must not follow redirects.
 
 
-### `resolve_repo_did` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L109" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `resolve_repo_did` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L121" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 resolve_repo_did(repo: str) -> str
 ```
 
-### `discover_pds` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L118" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `discover_pds` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L132" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 discover_pds(repo: str) -> str
@@ -79,7 +91,7 @@ discover PDS URL from handle or DID.
 
 ## Classes
 
-### `URIParts` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L71" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `URIParts` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L83" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 
 parsed components of an AT-URI.
@@ -87,7 +99,7 @@ parsed components of an AT-URI.
 
 **Methods:**
 
-#### `from_uri` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L79" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+#### `from_uri` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/resolution.py#L91" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 from_uri(cls, uri: str, client_did: str | None = None) -> URIParts

@@ -10,6 +10,7 @@ from typing import Any
 from atproto import AsyncClient
 
 from pdsx._internal.auth import login_with_session_fallback
+from pdsx._internal.resolution import pin_handle, unpin_handle
 from pdsx.mcp._types import CredentialsContext
 
 logger = logging.getLogger(__name__)
@@ -21,12 +22,14 @@ _active_account: dict[str, str] | None = None
 
 def set_active_account(*, handle: str, did: str, password: str, pds_url: str) -> None:
     global _active_account
+    clear_active_account()
     _active_account = {
         "handle": handle,
         "did": did,
         "password": password,
         "pds_url": pds_url,
     }
+    pin_handle(handle, did)
 
 
 def get_active_account() -> dict[str, str] | None:
@@ -35,6 +38,8 @@ def get_active_account() -> dict[str, str] | None:
 
 def clear_active_account() -> None:
     global _active_account
+    if _active_account:
+        unpin_handle(_active_account["handle"])
     _active_account = None
 
 

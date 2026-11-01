@@ -138,6 +138,22 @@ class TestSessionSwitching:
             assert session.base_url == "https://elsewhere.example"
         discover.assert_awaited_once_with("someone.else")
 
+    async def test_new_handle_resolves_without_dns_until_deleted(
+        self, fake_pds, monkeypatch
+    ):
+        from pdsx._internal import resolution
+
+        public = MagicMock()
+        public.return_value.handle.resolve = AsyncMock(return_value=None)
+        monkeypatch.setattr(resolution, "AsyncIdResolver", public)
+        await accounts.create_account(
+            "eval.pds1.test", "e@x.test", "pw", pds="https://pds1.test"
+        )
+        assert await resolution.resolve_repo_did("Eval.pds1.test") == "did:plc:new"
+        await accounts.delete_account("abcde-12345")
+        with pytest.raises(ValueError, match="could not resolve handle"):
+            await resolution.resolve_repo_did("eval.pds1.test")
+
     async def test_default_pds_is_the_configured_one(self, fake_pds):
         created = await accounts.create_account("eval.pds.example", "e@x.test", "pw")
         assert created["pds"] == "https://pds.example"
