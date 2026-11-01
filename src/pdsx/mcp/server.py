@@ -49,6 +49,7 @@ from pdsx.mcp._types import (
     RepoDescriptionResponse,
     UpdateResponse,
 )
+from pdsx.mcp.accounts import account_tools_enabled, register_account_tools
 from pdsx.mcp.client import (
     AuthenticationRequired,
     get_atproto_client,
@@ -84,6 +85,9 @@ AUTHENTICATED_QUERY_ALLOWLIST: frozenset[str] = frozenset(
 mcp = FastMCP("pdsx")
 
 mcp.add_middleware(AtprotoAuthMiddleware())
+
+if account_tools_enabled():
+    register_account_tools(mcp)
 
 
 def _clean_value(value: Any) -> dict[str, Any]:

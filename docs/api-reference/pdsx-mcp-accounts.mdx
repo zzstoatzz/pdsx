@@ -1,0 +1,81 @@
+---
+title: accounts
+sidebarTitle: accounts
+---
+
+# `pdsx.mcp.accounts`
+
+
+account lifecycle tools, registered only when PDSX_ENABLE_ACCOUNT_TOOLS=1.
+
+these exist for sandboxed evals against a disposable PDS. once
+``create_account`` succeeds, the new account becomes the active credentials for
+every later tool call in this process, so ``create_record`` and friends act as
+it. the hosted server never sets the flag, so none of this is reachable there.
+
+
+## Functions
+
+### `account_tools_enabled` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/accounts.py#L27" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+account_tools_enabled() -> bool
+```
+
+### `create_account` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/accounts.py#L31" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+create_account(handle: str, email: str, password: str, pds: str | None = None, invite_code: str | None = None) -> dict[str, Any]
+```
+
+
+create an account on a PDS and switch this session to it.
+
+after this succeeds, record tools (create_record, delete_record, whoami, ...)
+act as the new account.
+
+**Args:**
+- `handle`: full handle, within one of the PDS's service handle domains
+- `email`: account email; deletion confirmations are sent here
+- `password`: account password
+- `pds`: PDS URL (defaults to the configured PDS)
+- `invite_code`: only if the PDS requires invites
+
+**Returns:**
+- dict with did, handle and pds of the new account
+
+
+### `request_account_delete` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/accounts.py#L66" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+request_account_delete() -> dict[str, str]
+```
+
+
+ask the PDS to email a deletion token to the active account.
+
+**Returns:**
+- confirmation naming the account; pass the emailed token to delete_account
+
+
+### `delete_account` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/accounts.py#L80" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+delete_account(token: str) -> dict[str, str]
+```
+
+
+permanently delete the account created in this session.
+
+**Args:**
+- `token`: the deletion token from the confirmation email
+
+**Returns:**
+- confirmation with the deleted did
+
+
+### `register_account_tools` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/accounts.py#L102" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+register_account_tools(mcp: FastMCP) -> None
+```

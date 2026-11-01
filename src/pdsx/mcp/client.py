@@ -14,6 +14,29 @@ from pdsx.mcp._types import CredentialsContext
 
 logger = logging.getLogger(__name__)
 
+# set only by the opt-in account tools (see pdsx.mcp.accounts). process-wide on
+# purpose: an eval's create_account must carry over to its later tool calls.
+_active_account: dict[str, str] | None = None
+
+
+def set_active_account(*, handle: str, did: str, password: str, pds_url: str) -> None:
+    global _active_account
+    _active_account = {
+        "handle": handle,
+        "did": did,
+        "password": password,
+        "pds_url": pds_url,
+    }
+
+
+def get_active_account() -> dict[str, str] | None:
+    return dict(_active_account) if _active_account else None
+
+
+def clear_active_account() -> None:
+    global _active_account
+    _active_account = None
+
 
 async def _maybe_await(value: Any) -> Any:
     """await ``value`` if it's awaitable, else return it as-is.
@@ -144,6 +167,8 @@ async def get_atproto_client(
             records = await client.com.atproto.repo.list_records(...)
     """
     creds = await _get_credentials_from_context()
+    if _active_account:
+        creds = {**creds, **_active_account}
 
     # use context credentials if available, else fall back to env
     if creds["handle"] or creds["password"]:
