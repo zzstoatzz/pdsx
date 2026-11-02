@@ -142,3 +142,6 @@ python-version = "3.10"
 [tool.ty.rules]
 unknown-argument = "ignore"
 no-matching-overload = "ignore"
+
+[tool.uv.sources]
+atproto = { git = "https://github.com/zzstoatzz/atproto", rev = "d17b403a0c579089a0b4298368985573a178ccf8" }

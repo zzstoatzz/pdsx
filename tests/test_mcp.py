@@ -570,3 +570,24 @@ async def test_get_record_preserves_source_structure(mocker, kind):
     assert result == raw
     assert "links" not in result["value"]
     assert result["value"]["facets"][0]["index"] == {"byteStart": 82, "byteEnd": 101}
+
+
+async def test_get_record_reads_a_grain_gallery(mocker):
+    """social.grain.gallery's generated module must expose its Record model."""
+    uri = "at://did:plc:65sucjiel52gefhcdcypynsr/social.grain.gallery/3mrb5xeuy6r26"
+    raw = {
+        "uri": uri,
+        "cid": "bafyreickfjb3da3g3tmwl5dhzbyn3ijvbmdz3dfhlhq5gxl4macnnzqive",
+        "value": {
+            "$type": "social.grain.gallery",
+            "title": "what a night of checking things looks like",
+            "createdAt": "2026-07-22T20:28:15.685656Z",
+        },
+    }
+    response = models.ComAtprotoRepoGetRecord.Response.model_validate(raw)
+    mocker.patch("pdsx.mcp.server._get_record", AsyncMock(return_value=response))
+    mocker.patch("pdsx.mcp.server.get_atproto_client")
+
+    result = await get_record(uri)
+
+    assert result == raw

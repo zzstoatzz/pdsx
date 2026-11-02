@@ -2,3 +2,6 @@
 # point its dependencyPath here — the CLI package itself does not depend on
 # fastmcp (see #91 for the wrong turn this replaces).
 .[mcp]
+# keep in step with [tool.uv.sources] in pyproject.toml: the fork carries the
+# exclude_unset fix for records in unknown fields until an SDK release has it.
+atproto @ git+https://github.com/zzstoatzz/atproto@d17b403a0c579089a0b4298368985573a178ccf8
