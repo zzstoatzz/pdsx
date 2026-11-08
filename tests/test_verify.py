@@ -310,6 +310,13 @@ async def test_plc_history_for_did_web_explains_no_log():
     assert result["method"] == "web"
 
 
+def test_plc_directory_defaults_to_plc_directory_and_honors_override(monkeypatch):
+    monkeypatch.delenv("PDSX_PLC_DIRECTORY", raising=False)
+    assert identity_mod.plc_directory() == "https://plc.directory"
+    monkeypatch.setenv("PDSX_PLC_DIRECTORY", "https://plc.sandbox.test/")
+    assert identity_mod.plc_directory() == "https://plc.sandbox.test"
+
+
 # -----------------------------------------------------------------------------
 # bidirectional handles
 # -----------------------------------------------------------------------------

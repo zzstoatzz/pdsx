@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -17,6 +18,11 @@ from pdsx._internal.verify import (
 )
 
 PLC_DIRECTORY = "https://plc.directory"
+
+
+def plc_directory() -> str:
+    """the PLC directory to read audit logs from. a sandbox with its own PLC sets PDSX_PLC_DIRECTORY."""
+    return (os.environ.get("PDSX_PLC_DIRECTORY") or PLC_DIRECTORY).rstrip("/")
 
 
 @dataclass
@@ -131,7 +137,7 @@ async def plc_history(did: str, timeout: float = 10.0) -> dict[str, Any]:
         raise ValueError(f"expected a did:plc or did:web, got {did!r}")
 
     async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
-        response = await client.get(f"{PLC_DIRECTORY}/{did}/log/audit")
+        response = await client.get(f"{plc_directory()}/{did}/log/audit")
         response.raise_for_status()
         entries = response.json()
     return {"method": "plc", **asdict(verify_plc_log(did, entries))}
