@@ -135,8 +135,8 @@ class TestDiscoverPds:
     @pytest.mark.parametrize(
         "repo,expected_pds",
         [
-            ("zzstoatzz.io", "https://pds.zzstoatzz.io"),
-            ("did:plc:xbtmt2zjwlrfegqvch7fboei", "https://pds.zzstoatzz.io"),
+            ("alice.example.test", "https://pds.example.test"),
+            ("did:plc:fixturefixturefixture00", "https://pds.example.test"),
         ],
     )
     async def test_discover_pds_from_handle_and_did(
@@ -146,7 +146,7 @@ class TestDiscoverPds:
         # mock the resolver
         mock_resolver = MagicMock()
         mock_resolver.handle.resolve = AsyncMock(
-            return_value="did:plc:xbtmt2zjwlrfegqvch7fboei"
+            return_value="did:plc:fixturefixturefixture00"
         )
 
         mock_atproto_data = MagicMock()
@@ -205,13 +205,13 @@ class TestAuthenticatedPdsResolution:
     async def test_write_discovers_pds_from_handle(self, mocker) -> None:
         from pdsx import cli
 
-        mocker.patch.object(cli.settings, "atproto_handle", "zzstoatzz.io")
+        mocker.patch.object(cli.settings, "atproto_handle", "alice.example.test")
         mocker.patch.object(cli.settings, "atproto_password", "pw")
         mocker.patch.object(cli.settings, "atproto_pds_url", "https://bsky.social")
         mocker.patch.object(type(cli.settings), "model_fields_set", set())
 
         discover = mocker.patch.object(
-            cli, "discover_pds", AsyncMock(return_value="https://pds.zzstoatzz.io")
+            cli, "discover_pds", AsyncMock(return_value="https://pds.example.test")
         )
         client_cls = mocker.patch.object(cli, "AsyncClient")
         mocker.patch.object(cli, "login", AsyncMock())
@@ -221,14 +221,14 @@ class TestAuthenticatedPdsResolution:
         )
 
         assert await cli.async_main() == 0
-        discover.assert_awaited_once_with("zzstoatzz.io")
-        assert client_cls.call_args.kwargs["base_url"] == "https://pds.zzstoatzz.io"
+        discover.assert_awaited_once_with("alice.example.test")
+        assert client_cls.call_args.kwargs["base_url"] == "https://pds.example.test"
 
     @pytest.mark.asyncio
     async def test_explicit_pds_flag_skips_discovery(self, mocker) -> None:
         from pdsx import cli
 
-        mocker.patch.object(cli.settings, "atproto_handle", "zzstoatzz.io")
+        mocker.patch.object(cli.settings, "atproto_handle", "alice.example.test")
         mocker.patch.object(cli.settings, "atproto_password", "pw")
 
         discover = mocker.patch.object(cli, "discover_pds", AsyncMock())

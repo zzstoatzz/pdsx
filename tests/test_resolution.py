@@ -1,8 +1,15 @@
 """tests for PDS and URI resolution utilities."""
 
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 
 from pdsx._internal.resolution import URIParts, discover_pds
+
+HANDLE = "alice.example.test"
+DID = "did:plc:fixturefixturefixture00"
+PDS = "https://pds.example.test"
 
 
 class TestURIParts:
@@ -34,31 +41,38 @@ class TestURIParts:
 
 
 class TestDiscoverPds:
-    """tests for PDS discovery."""
+    """tests for PDS discovery, with identity resolution faked."""
 
-    @pytest.mark.asyncio
-    async def test_discover_pds_for_handle(self):
-        """discovers PDS for a handle."""
-        # using a known user on a self-hosted PDS
-        pds = await discover_pds("zzstoatzz.io")
-        assert pds == "https://pds.zzstoatzz.io"
+    @pytest.fixture
+    def resolver(self, mocker):
+        resolver = MagicMock()
+        resolver.handle.resolve = AsyncMock(
+            side_effect=lambda handle: {HANDLE: DID}.get(handle)
+        )
+        resolver.did.resolve_atproto_data = AsyncMock(
+            side_effect=lambda did: SimpleNamespace(pds=PDS) if did == DID else None
+        )
+        mocker.patch("pdsx._internal.resolution.AsyncIdResolver", return_value=resolver)
+        return resolver
 
-    @pytest.mark.asyncio
-    async def test_discover_pds_for_standard_user(self):
-        """discovers PDS for a standard bsky user."""
-        pds = await discover_pds("jay.bsky.team")
-        # standard users are on bsky network PDS hosts
-        assert "bsky.network" in pds
+    async def test_discover_pds_for_handle(self, resolver):
+        """resolves a handle to its DID, then the DID document to its PDS."""
+        assert await discover_pds(HANDLE) == PDS
+        resolver.handle.resolve.assert_awaited_once_with(HANDLE)
+        resolver.did.resolve_atproto_data.assert_awaited_once_with(DID)
 
-    @pytest.mark.asyncio
-    async def test_discover_pds_for_did(self):
-        """discovers PDS from DID directly."""
-        # zzstoatzz.io's DID
-        pds = await discover_pds("did:plc:xbtmt2zjwlrfegqvch7fboei")
-        assert pds == "https://pds.zzstoatzz.io"
+    async def test_discover_pds_for_did(self, resolver):
+        """resolves a DID document directly, without handle resolution."""
+        assert await discover_pds(DID) == PDS
+        resolver.handle.resolve.assert_not_awaited()
+        resolver.did.resolve_atproto_data.assert_awaited_once_with(DID)
 
-    @pytest.mark.asyncio
-    async def test_discover_pds_invalid_handle(self):
-        """raises on invalid handle."""
+    async def test_discover_pds_invalid_handle(self, resolver):
+        """raises on a handle that does not resolve."""
         with pytest.raises(ValueError, match="could not resolve handle"):
             await discover_pds("definitely.not.a.real.handle.invalid")
+
+    async def test_discover_pds_without_did_document(self, resolver):
+        """raises when the DID document cannot be resolved."""
+        with pytest.raises(ValueError, match="could not find PDS"):
+            await discover_pds("did:plc:unknown")

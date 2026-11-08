@@ -151,13 +151,17 @@ class TestAtprotoAuthMiddleware:
 class TestGetAtprotoClient:
     """tests for get_atproto_client with PDS discovery."""
 
-    async def test_pds_discovery_for_target_repo(self):
+    async def test_pds_discovery_for_target_repo(self, mocker):
         """discovers correct PDS when target_repo is provided."""
         from pdsx.mcp.client import get_atproto_client
 
-        # should discover pds.zzstoatzz.io for this user
-        async with get_atproto_client(target_repo="zzstoatzz.io") as client:
-            assert "pds.zzstoatzz.io" in client._base_url
+        discover = mocker.patch(
+            "pdsx._internal.resolution.discover_pds",
+            AsyncMock(return_value="https://pds.example.test"),
+        )
+        async with get_atproto_client(target_repo="alice.example.test") as client:
+            assert "pds.example.test" in client._base_url
+        discover.assert_awaited_once_with("alice.example.test")
 
     async def test_pds_discovery_standard_user(self, mocker):
         """uses bsky network PDS for standard users."""
@@ -195,15 +199,20 @@ class TestGetAtprotoClient:
         """
         from pdsx.mcp import client as mcp_client
 
-        monkeypatch.setenv("ATPROTO_HANDLE", "zzstoatzz.io")
+        monkeypatch.setenv("ATPROTO_HANDLE", "alice.example.test")
         monkeypatch.setenv("ATPROTO_PASSWORD", "fake-password")
         monkeypatch.delenv("ATPROTO_PDS_URL", raising=False)
+        discover = mocker.patch(
+            "pdsx._internal.resolution.discover_pds",
+            AsyncMock(return_value="https://pds.example.test"),
+        )
         login = mocker.patch.object(
             mcp_client, "login_with_session_fallback", AsyncMock()
         )
 
         async with mcp_client.get_atproto_client(require_auth=True) as client:
-            assert "pds.zzstoatzz.io" in client._base_url
+            assert "pds.example.test" in client._base_url
+        discover.assert_awaited_once_with("alice.example.test")
         login.assert_awaited_once()
 
     async def test_skips_auth_when_reading_other_pds(self, monkeypatch, mocker):
@@ -220,13 +229,13 @@ class TestGetAtprotoClient:
         monkeypatch.setenv("ATPROTO_PASSWORD", "fake-password")
         mocker.patch(
             "pdsx._internal.resolution.discover_pds",
-            AsyncMock(return_value="https://pds.zzstoatzz.io"),
+            AsyncMock(return_value="https://pds.example.test"),
         )
 
-        # should discover zzstoatzz.io's PDS and NOT try to login
+        # should discover the target's PDS and NOT try to login
         # (because our bsky.social credentials won't work on their PDS)
-        async with get_atproto_client(target_repo="zzstoatzz.io") as client:
-            assert "pds.zzstoatzz.io" in client._base_url
+        async with get_atproto_client(target_repo="alice.example.test") as client:
+            assert "pds.example.test" in client._base_url
             # client.me is None when not authenticated
             assert client.me is None
 
