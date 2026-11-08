@@ -10,7 +10,17 @@ identity checks: bidirectional handles, record proofs, PLC history.
 
 ## Functions
 
-### `verify_identity` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/identity.py#L35" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `plc_directory` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/identity.py#L23" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+
+```python
+plc_directory() -> str
+```
+
+
+the PLC directory to read audit logs from. a sandbox with its own PLC sets PDSX_PLC_DIRECTORY.
+
+
+### `verify_identity` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/identity.py#L41" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 verify_identity(repo: str, resolver: AsyncIdResolver | None = None) -> Identity
@@ -25,7 +35,7 @@ anyone can put any handle in their own DID document, and a DNS record
 can point at any DID.
 
 
-### `fetch_record_proof` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/identity.py#L83" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `fetch_record_proof` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/identity.py#L89" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 fetch_record_proof(did: str, collection: str, rkey: str, resolver: AsyncIdResolver | None = None, timeout: float = 10.0) -> RecordProof
@@ -37,7 +47,7 @@ fetch sync.getRecord from the repo's own PDS and verify it.
 the signing key and PDS come from the DID document, never from the PDS.
 
 
-### `plc_history` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/identity.py#L121" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `plc_history` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/identity.py#L127" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 plc_history(did: str, timeout: float = 10.0) -> dict[str, Any]
@@ -49,11 +59,11 @@ the did:plc audit log, each op checked and summarized.
 
 ## Classes
 
-### `Identity` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/identity.py#L23" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+### `Identity` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/identity.py#L29" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 **Methods:**
 
-#### `to_dict` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/identity.py#L31" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
+#### `to_dict` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/_internal/identity.py#L37" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
 to_dict(self) -> dict[str, Any]
