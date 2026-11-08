@@ -136,7 +136,7 @@ async def discover_pds(repo: str) -> str:
         repo: handle (e.g., 'zzstoatzz.io') or DID (e.g., 'did:plc:...')
 
     Returns:
-        PDS URL (e.g., 'https://pds.zzstoatzz.io')
+        PDS URL (e.g., 'https://pds.example.com')
 
     Raises:
         ValueError: if handle cannot be resolved or PDS not found
