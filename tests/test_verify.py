@@ -361,7 +361,7 @@ class FakeResolver:
 
 async def test_handle_verified_both_ways():
     resolver = FakeResolver({"alice.test": DID}, "alice.test")
-    ident = await identity_mod.verify_identity("alice.test", resolver)  # type: ignore[arg-type]
+    ident = await identity_mod.verify_identity("alice.test", resolver)  # ty: ignore[invalid-argument-type]
     assert ident.handle_verified
     assert ident.pds == "https://pds.example"
     assert ident.signing_key and ident.signing_key.startswith("did:key:z")
@@ -369,14 +369,14 @@ async def test_handle_verified_both_ways():
 
 async def test_handle_pointing_at_did_that_does_not_claim_it():
     resolver = FakeResolver({"impostor.test": DID, "alice.test": DID}, "alice.test")
-    ident = await identity_mod.verify_identity("impostor.test", resolver)  # type: ignore[arg-type]
+    ident = await identity_mod.verify_identity("impostor.test", resolver)  # ty: ignore[invalid-argument-type]
     assert not ident.handle_verified
     assert "claims 'alice.test'" in (ident.reason or "")
 
 
 async def test_did_doc_claiming_a_handle_it_does_not_control():
     resolver = FakeResolver({"bsky.app": "did:plc:someoneelse"}, "bsky.app")
-    ident = await identity_mod.verify_identity(DID, resolver)  # type: ignore[arg-type]
+    ident = await identity_mod.verify_identity(DID, resolver)  # ty: ignore[invalid-argument-type]
     assert not ident.handle_verified
     assert "resolves to did:plc:someoneelse" in (ident.reason or "")
 

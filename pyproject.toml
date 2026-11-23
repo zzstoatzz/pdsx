@@ -138,6 +138,7 @@ exclude = [
 
 [tool.ty.environment]
 python-version = "3.10"
+extra-paths = ["stubs"]
 
 [tool.ty.rules]
 unknown-argument = "ignore"

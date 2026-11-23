@@ -120,7 +120,7 @@ async def list_records(
     if not target_repo:
         raise ValueError("no repo specified and not authenticated")
 
-    params: dict[str, str | int] = {
+    params: models.ComAtprotoRepoListRecords.ParamsDict = {
         "repo": await resolve_repo_did(target_repo),
         "collection": collection,
         "limit": limit,
@@ -189,7 +189,7 @@ async def create_record(
     if "createdAt" not in record:
         record["createdAt"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
-    params: dict[str, str | dict[str, RecordValue]] = {
+    params: models.ComAtprotoRepoCreateRecord.DataDict = {
         "repo": client.me.did,
         "collection": collection,
         "record": record,
@@ -249,7 +249,7 @@ async def update_record(
             "collection": parts.collection,
             "rkey": parts.rkey,
             "record": updated_value,
-            "swapRecord": current.cid,
+            "swap_record": current.cid,
         }
     )
 
@@ -271,7 +271,7 @@ async def delete_record(
         raise ValueError("not authenticated")
     parts = URIParts.from_uri(uri, client.me.did)
     parts.repo = await resolve_repo_did(parts.repo)
-    target = {
+    target: models.ComAtprotoRepoGetRecord.ParamsDict = {
         "repo": parts.repo,
         "collection": parts.collection,
         "rkey": parts.rkey,
@@ -286,7 +286,9 @@ async def delete_record(
             raise RecordNotFoundError(f"no record at {uri}") from e
         raise
 
-    await client.com.atproto.repo.delete_record(target)
+    await client.com.atproto.repo.delete_record(
+        {"repo": parts.repo, "collection": parts.collection, "rkey": parts.rkey}
+    )
 
 
 async def describe_repo(

@@ -31,6 +31,7 @@ class TestLoginWithoutAppviewProxy:
 
         await login_with_session_fallback(client, "zat.dev", "pw")
 
+        assert client.me is not None
         assert client.me.did == "did:plc:test"
         assert client.me.handle == "zat.dev"
 

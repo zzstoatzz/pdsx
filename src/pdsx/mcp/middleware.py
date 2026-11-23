@@ -1,13 +1,12 @@
 """middleware for pdsx MCP server."""
 
 import logging
-from collections.abc import Sequence
 from typing import Any
 
 import mcp_types as mt
+from fastmcp.resources.base import ResourceResult
 from fastmcp.server.dependencies import get_http_headers
 from fastmcp.server.middleware import CallNext, Middleware, MiddlewareContext
-from mcp.server.lowlevel.helper_types import ReadResourceContents
 
 from pdsx.mcp.client import _maybe_await
 
@@ -72,10 +71,8 @@ class AtprotoAuthMiddleware(Middleware):
     async def on_read_resource(
         self,
         context: MiddlewareContext[mt.ReadResourceRequestParams],
-        call_next: CallNext[
-            mt.ReadResourceRequestParams, Sequence[ReadResourceContents]
-        ],
-    ) -> Sequence[ReadResourceContents]:
+        call_next: CallNext[mt.ReadResourceRequestParams, ResourceResult],
+    ) -> ResourceResult:
         """extract credentials from headers on each resource read."""
         await self._extract_credentials()
         return await call_next(context)

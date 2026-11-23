@@ -107,11 +107,12 @@ def test_no_hand_written_versions() -> None:
     tagged = subprocess.run(
         ["git", "describe", "--tags", "--abbrev=0"],
         capture_output=True,
+        check=False,
         text=True,
         cwd=REPO,
     )
     if tagged.returncode != 0:
-        pytest.skip("no git tags available in this checkout")
+        pytest.skip(reason="no git tags available in this checkout")
     expected = tagged.stdout.strip().lstrip("v")
 
     codex = json.loads((PLUGIN / ".codex-plugin" / "plugin.json").read_text())

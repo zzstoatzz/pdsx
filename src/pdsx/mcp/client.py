@@ -3,7 +3,7 @@
 import inspect
 import logging
 import os
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -94,7 +94,7 @@ async def _get_credentials_from_context() -> CredentialsContext:
             from fastmcp.server.dependencies import get_http_headers
 
             headers = get_http_headers(include_all=True)
-        except Exception:
+        except ImportError:
             headers = {}
         if headers:
             result["handle"] = result["handle"] or headers.get("x-atproto-handle")
@@ -141,7 +141,7 @@ async def get_atproto_client(
     require_auth: bool = False,
     operation: str = "this operation",
     target_repo: str | None = None,
-) -> AsyncIterator[AsyncClient]:
+) -> AsyncGenerator[AsyncClient]:
     """get an atproto client using credentials from context or environment.
 
     first checks if credentials were provided via http headers (stored in fastmcp

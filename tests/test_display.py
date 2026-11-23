@@ -37,7 +37,7 @@ def test_display_records_with_pydantic_model(
         value=value,
     )
 
-    display_records("test.collection", [record], output_format=OutputFormat.COMPACT)  # type: ignore[arg-type]
+    display_records("test.collection", [record], output_format=OutputFormat.COMPACT)  # ty: ignore[invalid-argument-type]
     captured = capsys.readouterr()
 
     assert "test.collection (1 record)" in captured.out
@@ -54,7 +54,7 @@ def test_display_records_with_dotdict(capsys: pytest.CaptureFixture[str]) -> Non
         value=value,
     )
 
-    display_records("fm.plyr.track", [record], output_format=OutputFormat.COMPACT)  # type: ignore[arg-type]
+    display_records("fm.plyr.track", [record], output_format=OutputFormat.COMPACT)  # ty: ignore[invalid-argument-type]
     captured = capsys.readouterr()
 
     assert "fm.plyr.track (1 record)" in captured.out
@@ -72,7 +72,7 @@ def test_display_records_with_plain_dict(capsys: pytest.CaptureFixture[str]) -> 
         value=value,
     )
 
-    display_records("custom.record", [record], output_format=OutputFormat.COMPACT)  # type: ignore[arg-type]
+    display_records("custom.record", [record], output_format=OutputFormat.COMPACT)  # ty: ignore[invalid-argument-type]
     captured = capsys.readouterr()
 
     assert "custom.record (1 record)" in captured.out

@@ -88,7 +88,7 @@ async def batch_delete(
             try:
                 await delete_record(client, uri)
                 successful.append(uri)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - each failure is reported per record
                 failed.append((uri, e))
                 if fail_fast:
                     stopped.set()
@@ -98,8 +98,7 @@ async def batch_delete(
 
     try:
         await asyncio.gather(*[delete_one(uri) for uri in uris])
-    except Exception:
-        # fail_fast raised an exception
+    except Exception:  # noqa: BLE001, S110 - fail_fast stops the batch; the failure is already recorded
         pass
     finally:
         if progress:
@@ -166,7 +165,7 @@ async def batch_create(
             try:
                 response = await create_record(client, collection, record, rkey=rkey)
                 successful.append(response.uri)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - each failure is reported per record
                 # use index as identifier since we don't have URI yet
                 failed.append((f"record #{index + 1}", e))
                 if fail_fast:
@@ -186,8 +185,7 @@ async def batch_create(
                 )
             ]
         )
-    except Exception:
-        # fail_fast raised an exception
+    except Exception:  # noqa: BLE001, S110 - fail_fast stops the batch; the failure is already recorded
         pass
     finally:
         if progress:
@@ -246,7 +244,7 @@ async def batch_update(
             try:
                 await update_record(client, uri, update_dict)
                 successful.append(uri)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - each failure is reported per record
                 failed.append((uri, e))
                 if fail_fast:
                     stopped.set()
@@ -256,8 +254,7 @@ async def batch_update(
 
     try:
         await asyncio.gather(*[update_one(uri, upd) for uri, upd in updates])
-    except Exception:
-        # fail_fast raised an exception
+    except Exception:  # noqa: BLE001, S110 - fail_fast stops the batch; the failure is already recorded
         pass
     finally:
         if progress:
@@ -302,7 +299,7 @@ def read_records_from_stdin() -> list[tuple[dict[str, RecordValue], str | None]]
         try:
             record = json.loads(line)
             if not isinstance(record, dict):
-                raise ValueError(
+                raise ValueError(  # noqa: TRY004 - bad input; callers report ValueError
                     f"line {line_num}: expected JSON object, got {type(record).__name__}"
                 )
             rkey = record.pop("rkey", None)
@@ -343,7 +340,7 @@ def read_updates_from_stdin() -> list[tuple[str, dict[str, RecordValue]]]:
         try:
             record = json.loads(line)
             if not isinstance(record, dict):
-                raise ValueError(
+                raise ValueError(  # noqa: TRY004 - bad input; callers report ValueError
                     f"line {line_num}: expected JSON object, got {type(record).__name__}"
                 )
             if "uri" not in record:
@@ -351,7 +348,9 @@ def read_updates_from_stdin() -> list[tuple[str, dict[str, RecordValue]]]:
 
             uri = record.pop("uri")
             if not isinstance(uri, str):
-                raise ValueError(f"line {line_num}: 'uri' must be a string")
+                raise ValueError(  # noqa: TRY004 - bad input; callers report ValueError
+                    f"line {line_num}: 'uri' must be a string"
+                )
 
             updates.append((uri, record))
         except json.JSONDecodeError as e:

@@ -34,7 +34,7 @@ async def test_full_uri_overrides_unrelated_default_repo(monkeypatch):
 async def test_unknown_target_does_not_fall_back_to_callers_pds():
     with pytest.raises(ValueError, match="could not resolve handle"):
         async with get_atproto_client(target_repo="does-not-exist.invalid"):
-            pytest.fail("an unresolved target produced a client")
+            pytest.fail(reason="an unresolved target produced a client")
 
 
 async def test_session_query_rejects_foreign_host_before_login(monkeypatch):

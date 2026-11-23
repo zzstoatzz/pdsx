@@ -16,6 +16,7 @@ from pdsx._internal.operations import (
     list_records,
     update_record,
 )
+from pdsx._internal.types import RecordValue
 
 
 @pytest.fixture
@@ -44,7 +45,7 @@ class TestGetRecord:
             return_value=models.ComAtprotoRepoGetRecord.Response(
                 uri="at://did:plc:test123/app.bsky.actor.profile/self",
                 cid="testcid",
-                value={"description": "my bio"},
+                value={"description": "my bio"},  # ty: ignore[invalid-argument-type]
             )
         )
 
@@ -66,7 +67,7 @@ class TestGetRecord:
             return_value=models.ComAtprotoRepoGetRecord.Response(
                 uri="at://did:plc:test123/app.bsky.actor.profile/self",
                 cid="testcid",
-                value={"description": "my bio"},
+                value={"description": "my bio"},  # ty: ignore[invalid-argument-type]
             )
         )
 
@@ -428,7 +429,7 @@ class TestCreateRecord:
             )
         )
 
-        record = {
+        record: dict[str, RecordValue] = {
             "text": "hello",
             "$type": "custom.type",
             "createdAt": "2025-01-01T00:00:00Z",
@@ -448,7 +449,7 @@ class TestDescribeRepo:
         mock_response = models.ComAtprotoRepoDescribeRepo.Response(
             handle="test.bsky.social",
             did="did:plc:test123",
-            did_doc={},
+            did_doc={},  # ty: ignore[invalid-argument-type]
             collections=["app.bsky.feed.post", "app.bsky.actor.profile"],
             handle_is_correct=True,
         )
@@ -476,7 +477,7 @@ class TestDescribeRepo:
         mock_response = models.ComAtprotoRepoDescribeRepo.Response(
             handle="other.bsky.social",
             did="did:plc:other456",
-            did_doc={},
+            did_doc={},  # ty: ignore[invalid-argument-type]
             collections=["app.bsky.feed.post"],
             handle_is_correct=True,
         )

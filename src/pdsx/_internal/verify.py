@@ -198,7 +198,7 @@ def verify_record_proof(
         record = _block(blocks, value_cid, "record")
     except ProofError as exc:
         return RecordProof(verified=False, reason=str(exc))
-    except Exception as exc:  # malformed input from a remote PDS
+    except Exception as exc:  # noqa: BLE001 - malformed input from a remote PDS
         return RecordProof(
             verified=False, reason=f"could not parse proof: {type(exc).__name__}: {exc}"
         )
@@ -237,7 +237,7 @@ def _signed_by(op: dict[str, Any], keys: list[str]) -> str | None:
             parse_did_key(key)
             if verify_signature(key, unsigned, signature):
                 return key
-        except Exception:  # an unparseable key just doesn't match
+        except Exception:  # noqa: BLE001, S112 - an unparseable key just doesn't match
             continue
     return None
 
@@ -316,7 +316,7 @@ def verify_plc_log(did: str, entries: list[dict[str, Any]]) -> PlcHistory:
             summary["signed_by"] = signer
         except ProofError as exc:
             failure = failure or str(exc)
-        except Exception as exc:  # malformed log entry
+        except Exception as exc:  # noqa: BLE001 - malformed log entry
             failure = (
                 failure or f"could not check op {cid}: {type(exc).__name__}: {exc}"
             )

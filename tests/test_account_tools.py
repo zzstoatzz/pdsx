@@ -108,8 +108,8 @@ class TestSessionSwitching:
         )
 
         async with client.get_atproto_client(require_auth=True) as session:
-            assert session.base_url == "https://pds1.test"
-            assert session.logged_in_as == ("eval.pds1.test", "pw")
+            assert session.base_url == "https://pds1.test"  # ty: ignore[missing-attribute]
+            assert session.logged_in_as == ("eval.pds1.test", "pw")  # ty: ignore[missing-attribute]
 
     @pytest.mark.parametrize("target", ["EVAL.pds1.test", "did:plc:new"])
     async def test_reads_of_the_new_account_skip_discovery(
@@ -123,8 +123,8 @@ class TestSessionSwitching:
             "eval.pds1.test", "e@x.test", "pw", pds="https://pds1.test"
         )
         async with client.get_atproto_client(target_repo=target) as session:
-            assert session.base_url == "https://pds1.test"
-            assert session.logged_in_as is None
+            assert session.base_url == "https://pds1.test"  # ty: ignore[missing-attribute]
+            assert session.logged_in_as is None  # ty: ignore[missing-attribute]
 
     async def test_reads_of_other_repos_still_discover(self, fake_pds, monkeypatch):
         from pdsx._internal import resolution
@@ -135,7 +135,7 @@ class TestSessionSwitching:
             "eval.pds1.test", "e@x.test", "pw", pds="https://pds1.test"
         )
         async with client.get_atproto_client(target_repo="someone.else") as session:
-            assert session.base_url == "https://elsewhere.example"
+            assert session.base_url == "https://elsewhere.example"  # ty: ignore[missing-attribute]
         discover.assert_awaited_once_with("someone.else")
 
     async def test_new_handle_resolves_without_dns_until_deleted(
@@ -160,7 +160,7 @@ class TestSessionSwitching:
 
     async def test_without_create_account_env_credentials_apply(self, fake_pds):
         async with client.get_atproto_client(require_auth=True) as session:
-            assert session.logged_in_as == ("operator.example", "operator-secret")
+            assert session.logged_in_as == ("operator.example", "operator-secret")  # ty: ignore[missing-attribute]
 
     async def test_failed_create_leaves_credentials_alone(self, fake_pds, monkeypatch):
         def failing(base_url):

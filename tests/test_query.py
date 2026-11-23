@@ -288,6 +288,7 @@ async def test_query_tool_returns_http_error_as_data(monkeypatch):
 
     monkeypatch.setattr(server, "_query", fake_query)
     result = await server.query(nsid="com.atproto.sync.listRepos", host="grain.social")
+    assert isinstance(result, dict)
     assert result["error"] == "http_status"
     assert result["status"] == 404
     assert "grain.social" in result["url"]
@@ -306,6 +307,7 @@ async def test_query_tool_returns_transport_error_as_data(monkeypatch):
     result = await server.query(
         nsid="com.atproto.sync.listRepos", host="pds.grain.social"
     )
+    assert isinstance(result, dict)
     assert result["error"] == "transport"
     assert "ConnectError" in result["message"]
 
@@ -322,6 +324,7 @@ async def test_query_tool_returns_non_json_error_as_data(monkeypatch):
     result = await server.query(
         nsid="com.atproto.sync.getBlob", host="pds.zzstoatzz.io"
     )
+    assert isinstance(result, dict)
     assert result["error"] == "non_json_response"
     assert "com.atproto.sync.getBlob" in result["message"]
     assert "binary" in result["message"]
@@ -435,6 +438,7 @@ async def test_query_select_projects_with_jq(monkeypatch):
     single = await fn("app.bsky.feed.getPosts", params={}, select=".posts | length")
     assert single == [2]
     bad = await fn("app.bsky.feed.getPosts", params={}, select=".posts[")
+    assert isinstance(bad, dict)
     assert bad["error"] == "bad_select"
 
 

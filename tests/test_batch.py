@@ -14,6 +14,7 @@ from pdsx._internal.batch import (
     read_updates_from_stdin,
     read_uris_from_stdin,
 )
+from pdsx._internal.types import RecordValue
 
 
 @pytest.fixture
@@ -222,7 +223,7 @@ class TestBatchCreate:
 
     async def test_batch_create_all_successful(self, mock_client: AsyncClient) -> None:
         """test batch create with all operations successful."""
-        records = [
+        records: list[dict[str, RecordValue]] = [
             {"text": "post 1"},
             {"text": "post 2"},
             {"text": "post 3"},
@@ -249,7 +250,7 @@ class TestBatchCreate:
 
     async def test_batch_create_with_failures(self, mock_client: AsyncClient) -> None:
         """test batch create with some failures."""
-        records = [
+        records: list[dict[str, RecordValue]] = [
             {"text": "post 1"},
             {"text": "post 2"},
             {"text": "post 3"},
@@ -387,7 +388,7 @@ class TestBatchUpdate:
 
     async def test_batch_update_all_successful(self, mock_client: AsyncClient) -> None:
         """test batch update with all operations successful."""
-        updates = [
+        updates: list[tuple[str, dict[str, RecordValue]]] = [
             ("at://did:plc:test123/app.bsky.feed.post/abc123", {"text": "updated 1"}),
             ("at://did:plc:test123/app.bsky.feed.post/def456", {"text": "updated 2"}),
             ("at://did:plc:test123/app.bsky.feed.post/ghi789", {"text": "updated 3"}),
@@ -413,7 +414,7 @@ class TestBatchUpdate:
 
     async def test_batch_update_with_failures(self, mock_client: AsyncClient) -> None:
         """test batch update with some failures."""
-        updates = [
+        updates: list[tuple[str, dict[str, RecordValue]]] = [
             ("at://did:plc:test123/app.bsky.feed.post/abc123", {"text": "updated 1"}),
             ("at://did:plc:test123/app.bsky.feed.post/def456", {"text": "updated 2"}),
             ("at://did:plc:test123/app.bsky.feed.post/ghi789", {"text": "updated 3"}),
@@ -445,7 +446,7 @@ class TestBatchUpdate:
 
     async def test_batch_update_fail_fast(self, mock_client: AsyncClient) -> None:
         """test batch update with fail_fast mode."""
-        updates = [
+        updates: list[tuple[str, dict[str, RecordValue]]] = [
             ("at://did:plc:test123/app.bsky.feed.post/abc123", {"text": "updated 1"}),
             ("at://did:plc:test123/app.bsky.feed.post/def456", {"text": "updated 2"}),
             ("at://did:plc:test123/app.bsky.feed.post/ghi789", {"text": "updated 3"}),
@@ -479,7 +480,7 @@ class TestBatchUpdate:
         """test batch update respects concurrency limit."""
         import asyncio
 
-        updates = [
+        updates: list[tuple[str, dict[str, RecordValue]]] = [
             (f"at://did:plc:test123/app.bsky.feed.post/uri{i}", {"text": f"text {i}"})
             for i in range(20)
         ]

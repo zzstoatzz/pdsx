@@ -12,11 +12,11 @@ from typing import NoReturn
 # suppress pydantic warnings from atproto library
 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic")
 
-from atproto import AsyncClient  # noqa: E402
+from atproto import AsyncClient
 
-from pdsx import __version__  # noqa: E402
-from pdsx._internal.auth import login  # noqa: E402
-from pdsx._internal.batch import (  # noqa: E402
+from pdsx import __version__
+from pdsx._internal.auth import login
+from pdsx._internal.batch import (
     batch_create,
     batch_delete,
     batch_update,
@@ -25,15 +25,15 @@ from pdsx._internal.batch import (  # noqa: E402
     read_updates_from_stdin,
     read_uris_from_stdin,
 )
-from pdsx._internal.config import settings  # noqa: E402
-from pdsx._internal.display import (  # noqa: E402
+from pdsx._internal.config import settings
+from pdsx._internal.display import (
     console,
     display_record,
     display_records,
     display_repo_description,
     display_success,
 )
-from pdsx._internal.operations import (  # noqa: E402
+from pdsx._internal.operations import (
     create_record,
     delete_record,
     describe_repo,
@@ -42,16 +42,16 @@ from pdsx._internal.operations import (  # noqa: E402
     update_record,
     upload_blob,
 )
-from pdsx._internal.output import OutputFormat  # noqa: E402
-from pdsx._internal.parsing import parse_key_value_args  # noqa: E402
-from pdsx._internal.permissioned import (  # noqa: E402
+from pdsx._internal.output import OutputFormat
+from pdsx._internal.parsing import parse_key_value_args
+from pdsx._internal.permissioned import (
     PermissionedDataUnsupported,
     get_space_record,
     list_space_records,
     list_spaces,
 )
-from pdsx._internal.resolution import discover_pds  # noqa: E402
-from pdsx._internal.types import RecordValue  # noqa: E402
+from pdsx._internal.resolution import discover_pds
+from pdsx._internal.types import RecordValue
 
 
 def describe_exception(exc: BaseException) -> str:

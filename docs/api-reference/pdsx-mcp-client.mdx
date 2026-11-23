@@ -59,7 +59,7 @@ extract credentials from fastmcp context if available.
 ### `get_atproto_client` <sup><a href="https://github.com/zzstoatzz/pdsx/blob/main/src/pdsx/mcp/client.py#L140" target="_blank"><Icon icon="github" style="width: 14px; height: 14px;" /></a></sup>
 
 ```python
-get_atproto_client(require_auth: bool = False, operation: str = 'this operation', target_repo: str | None = None) -> AsyncIterator[AsyncClient]
+get_atproto_client(require_auth: bool = False, operation: str = 'this operation', target_repo: str | None = None) -> AsyncGenerator[AsyncClient]
 ```
 
 
