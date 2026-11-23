@@ -25,7 +25,7 @@ classifiers = [
 
 dependencies = [
     "atproto>=0.0.63",
-    "fastmcp>=4.0.0a1",
+    "fastmcp>=4.1.2",
     "jq>=1.8",
     "httpx>=0.27",
     "pydantic-settings>=2.7.0",
@@ -35,7 +35,7 @@ dependencies = [
 
 [project.optional-dependencies]
 mcp = [
-    "fastmcp==4.0.0a1",
+    "fastmcp>=4.1.2",
     "typing-extensions>=4.12",
     "jmespath>=1.0",
 ]
@@ -54,7 +54,7 @@ dev = [
     "ty>=0.0.1a25",
     "mdxify>=0.2.34",
     "pytest-mock>=3.15.1",
-    "fastmcp==4.0.0a1",
+    "fastmcp>=4.1.2",
     "jmespath>=1.0",
 ]
 
@@ -73,9 +73,9 @@ fallback-version = "0.0.0"
 
 [tool.uv]
 constraint-dependencies = [
-    "fastmcp-slim==4.0.0a1",
-    "mcp==2.0.0b2",
-    "mcp-types==2.0.0b2",
+    "fastmcp-slim>=4.1.2",
+    "mcp>=2.3.0",
+    "mcp-types>=2.3.0",
 ]
 
 [tool.pytest.ini_options]
